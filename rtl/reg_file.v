@@ -20,4 +20,5 @@ always_ff @(posedge clk) begin
     if (we) begin
         mem[wa] <= wd;
     end
+end
 endmodule
