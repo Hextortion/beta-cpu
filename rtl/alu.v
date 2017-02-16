@@ -1,8 +1,19 @@
+///////////////////////////////////////////////////////////////////////////////
+//  File name: alu.v
+//  Author: Stefan Dumitrescu
+//  
+//  Description: This file contains the implementaion of the arithmetic
+//               logic unit
+///////////////////////////////////////////////////////////////////////////////
+
 module alu(
-    input logic [31:0] a,
-    input logic [31:0] b,
-    input logic [5:0] fn,
-    output logic [31:0] y
+    // control signals
+    input logic [5:0] fn,               // function to perform
+
+    // datapath signals
+    input logic [31:0] a,               // first operand
+    input logic [31:0] b,               // second operand
+    output logic [31:0] y               // result
 );
 
 // boolean functions
