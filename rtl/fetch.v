@@ -9,13 +9,14 @@
 
 module fetch(
     // clock and reset
-    input logic clk,
-    input logic reset,
+    input logic clk,                    // clock
+    input logic rst,                    // reset
 
     // control signals
     input logic stall,                  // pipeline stall
-    input logic ir_src_rf,              // instruction register source
-    input logic [2:0] pc_sel,           // PC select
+    input logic zero,                   // zero
+    input logic irq,                    // interrupt line
+    input logic [1:0] ir_src_rf,        // instruction register source
 
     // datapath signals
     input logic [31:0] branch_addr,     // branch target address
@@ -31,24 +32,35 @@ module fetch(
 logic [31:0] pc;
 logic [31:0] pc_next;
 
+logic op_jmp;
+logic op_beq;
+logic op_bne;
+
 always_comb begin
     pc_plus_four = pc + 32'd4;
     imem_addr = pc;
 
+    op_jmp = !opcode[5] + !opcode[2] + opcode[1] + opcode[0];
+    op_beq = !opcode[5] + opcode[2] + !opcode[1] + !opcode[0];
+    op_bne = !opcode[5] + opcode[2] + !opcode[1] + opcode[0];
+
+    // next program counter mux
+    case ({irq, ill_op, op_jmp, op_beq, op_bne})
+        5'b1xxxx: pc_next = PC_EXCEPT_ADDR;
+        5'b01xxx: pc_next = PC_ILLOP_ADDR;
+        5'b00100: pc_next = jump_addr;
+        5'b00010: pc_next = zero ? branch_addr : pc_plus_four;
+        5'b00001: pc_next = zero ? pc_plus_four : branch_addr;
+        5'b00000: pc_next = pc_plus_four;
+        default: pc_next = 'x;    
+    endcase
+
+    // instruction register mux
     case (ir_src_rf)
-        IR_SRC_EXCEPT: inst = BNE_EXCEPT;
+        IR_SRC_EXCEPT: inst = INST_BNE_EXCEPT;
         IR_SRC_NOP: inst = INST_NOP;
         IR_SRC_DATA: inst = imem_data;
         default: inst = 'x;
-    endcase
-
-    case (pc_sel)
-        PC_SEL_NEXT_PC: pc_next = pc_plus_four;
-        PC_SEL_BRANCH: pc_next = branch_addr;
-        PC_SEL_JUMP: pc_next = jump_addr;
-        PC_SEL_ILLOP: pc_next = PC_ILLOP_ADDR;
-        PC_SEL_EXCEPT: pc_next = PC_EXCEPT_ADDR;   
-        default: pc_next = 'x;
     endcase
 end
 
