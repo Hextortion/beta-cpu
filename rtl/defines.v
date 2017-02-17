@@ -18,3 +18,15 @@
 `define IR_SRC_EXCEPT 2'd0
 `define IR_SRC_NOP 2'd1
 `define IR_SRC_DATA 2'd2
+
+// opcode types
+`define OPCODE_CMP 6'b1x01xx
+`define OPCODE_ARITH 6'b1x00xx
+`define OPCODE_BOOL 6'b1x10xx
+`define OPCODE_SHIFT 6'b1x11xx
+
+// ALU defines
+`define ALU_MUX_CMP 2'b00;
+`define ALU_MUX_ARITH 2'b01;
+`define ALU_MUX_BOOL 2'b10;
+`define ALU_MUX_SHIFT 2'b11;

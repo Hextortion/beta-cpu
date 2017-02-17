@@ -59,6 +59,7 @@ logic [31:0] rd1;
 logic [31:0] rd2;
 
 always_comb begin
+    opcode = ir_decode[31:26];
     ra = ir_decode[20:16];
     rb = ir_decode[15:11];
     rc = ir_decode[25:21];
