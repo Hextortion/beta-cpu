@@ -24,6 +24,8 @@
 `define OPCODE_ARITH 6'b1x00xx
 `define OPCODE_BOOL 6'b1x10xx
 `define OPCODE_SHIFT 6'b1x11xx
+`define OPCODE_LDST 6'b0xx00x
+`define OPCODE_LDR 6'bxxx111
 
 // ALU defines
 `define ALU_MUX_CMP 2'b00;
