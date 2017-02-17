@@ -22,7 +22,11 @@ module decode(
     output logic [31:0] a_reg,          // output for register A in ALU stage
     output logic [31:0] b_reg,          // output for register B in ALU stage
 
+    output logic [31:0] pc_decode,      // pc output for next stage
+    output logic [31:0] inst_next,      // instruction output for next stage
+
     // control signals
+    input logic [1:0] ir_src_dec        // source for next instruction register
     output logic zero,                  // zero detected
 
     // bypass signals
@@ -36,7 +40,6 @@ module decode(
     input logic rf_we                   // register file write enable
 );
 
-logic [31:0] pc_decode;
 logic [31:0] ir_decode;
 logic [5:0] opcode;
 logic [4:0] ra;
@@ -68,7 +71,7 @@ always_comb begin
     zero = ~|rd1;
     jump = rd1;
 
-    // Set the branch address to PC_decode + 4 + 4 * SXT(C)
+    // set the branch address to PC_decode + 4 + 4 * SXT(C)
     branch_addr = pc_decode + 32'd4 + {14{constant[15]}, constant, 2'b00};
 
     opc = opcode[5] && opcode[4];
@@ -79,8 +82,18 @@ always_comb begin
     a_reg = a_sel ? branch_addr : rd1;
     b_sel = op_ld || opc || op_st;
 
+    st_data = rd2;
+
     // B = BSEL ? SXT(C) : RD2
     b_reg = b_sel ? {16{constant[15]}, constant} : rd2;
+
+    // mux for the next instruction register in the pipeline
+    case (ir_src_dec)
+        IR_SRC_EXCEPT: inst_next = INST_BNE_EXCEPT;
+        IR_SRC_NOP: inst_next = INST_NOP;
+        IR_SRC_DATA: inst_next = ir_decode;
+        default: inst_next = 'x;
+    endcase
 end
 
 always_ff @(posedge clk) begin
