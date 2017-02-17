@@ -5,17 +5,14 @@
 //  Description: This file contains constants used throughout the project
 ///////////////////////////////////////////////////////////////////////////////
 
+// instructions
+`define INST_BNE_EXCEPT 32'hcfdf0000            // BNE(R31, 0, XP)
+`define INST_NOP 32'h83fff800                   // ADD(R31, R31, R31)
+
 // pc default addresses
 `define PC_RESET_ADDR 32'h80000000
 `define PC_EXCEPT_ADDR 32'h80000004
 `define PC_ILLOP_ADDR 32'h80000008
-
-// pc select control signal
-`define PC_SEL_NEXT_PC 3'd0
-`define PC_SEL_BRANCH 3'd1
-`define PC_SEL_JUMP 3'd2
-`define PC_SEL_ILLOP 3'd3
-`define PC_SEL_EXCEPT 3'd4
 
 // instruction register source control signal
 `define IR_SRC_EXCEPT 2'd0
