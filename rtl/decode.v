@@ -90,9 +90,9 @@ always_comb begin
 
     // mux for the next instruction register in the pipeline
     case (ir_src_dec)
-        IR_SRC_EXCEPT: inst_next = INST_BNE_EXCEPT;
-        IR_SRC_NOP: inst_next = INST_NOP;
-        IR_SRC_DATA: inst_next = ir_decode;
+        `IR_SRC_EXCEPT: inst_next = `INST_BNE_EXCEPT;
+        `IR_SRC_NOP: inst_next = `INST_NOP;
+        `IR_SRC_DATA: inst_next = ir_decode;
         default: inst_next = 'x;
     endcase
 end

@@ -46,8 +46,8 @@ always_comb begin
 
     // next program counter mux
     case ({irq, ill_op, op_jmp, op_beq, op_bne})
-        5'b1xxxx: pc_next = PC_EXCEPT_ADDR;
-        5'b01xxx: pc_next = PC_ILLOP_ADDR;
+        5'b1xxxx: pc_next = `PC_EXCEPT_ADDR;
+        5'b01xxx: pc_next = `PC_ILLOP_ADDR;
         5'b00100: pc_next = jump_addr;
         5'b00010: pc_next = zero ? branch_addr : pc_plus_four;
         5'b00001: pc_next = zero ? pc_plus_four : branch_addr;
@@ -57,16 +57,16 @@ always_comb begin
 
     // instruction register mux
     case (ir_src_rf)
-        IR_SRC_EXCEPT: inst = INST_BNE_EXCEPT;
-        IR_SRC_NOP: inst = INST_NOP;
-        IR_SRC_DATA: inst = imem_data;
+        `IR_SRC_EXCEPT: inst = `INST_BNE_EXCEPT;
+        `IR_SRC_NOP: inst = `INST_NOP;
+        `IR_SRC_DATA: inst = imem_data;
         default: inst = 'x;
     endcase
 end
 
 always_ff @(posedge clk) begin
     if (rst) begin
-        pc <= PC_RESET_ADDR;
+        pc <= `PC_RESET_ADDR;
     end else begin
         if (~stall) begin
             pc <= pc_next;

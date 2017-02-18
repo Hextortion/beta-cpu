@@ -23,12 +23,12 @@
 `define IR_SRC_DATA 2'd2
 
 // opcode types
-`define OPCODE_TYPE_CMP 6'b1x01xx
-`define OPCODE_TYPE_ARITH 6'b1x00xx
-`define OPCODE_TYPE_BOOL 6'b1x10xx
-`define OPCODE_TYPE_SHIFT 6'b1x11xx
-`define OPCODE_TYPE_LDST 6'b0xx00x
-`define OPCODE_TYPE_LDR 6'bxxx111
+`define OPCODE_TYPE_CMP 6'b1?01??
+`define OPCODE_TYPE_ARITH 6'b1?00??
+`define OPCODE_TYPE_BOOL 6'b1?10??
+`define OPCODE_TYPE_SHIFT 6'b1?11??
+`define OPCODE_TYPE_LDST 6'b0??00?
+`define OPCODE_TYPE_LDR 6'b???111
 
 // opcodes
 `define OPCODE_LD 6'b011000
