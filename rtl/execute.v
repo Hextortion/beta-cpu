@@ -50,7 +50,7 @@ always_comb begin
     opcode = ir_exec[31:26];
 
     // generating the correct fn bits for the ALU
-    case (opcode)
+    case (opcode) inside
         ///////////////////////////////////////////////////////////////////////
         // FN[5:0]      Operation           Output Value Y[31:0]
         // 00x011       CMPEQ               Y = (A == B)
