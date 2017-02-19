@@ -26,6 +26,9 @@ module decode(
 
     output logic op_ld_or_st,           // LD or ST control signal
     output logic op_ldr,                // LDR control signal
+    output logic op_jmp,                // JMP control signal
+    output logic op_beq,                // BEQ control signal
+    output logic op_bne,                // BNE control signal
 
     // control signals
     input logic [1:0] ir_src_dec,       // source for next instruction register
@@ -59,7 +62,6 @@ logic op_ld;
 logic op_ld_or_ldr;
 logic op;
 logic opc;
-logic jump;
 logic a_sel;
 logic b_sel;
 logic stall;
@@ -78,11 +80,12 @@ always_comb begin
     constant = ir_decode[15:0];
     
     zero = ~|rd1;
-    jump = rd1;
+    jump_addr = rd1;
 
     // set the branch address to PC_decode + 4 + 4 * SXT(C)
     branch_addr = pc_decode + 32'd4 + {{14{constant[15]}}, constant, 2'b00};
 
+    ///////////////////////////////////////////////////////////////////////////
     // Opcode Table (columns = opcode[2:0], rows = opcode[5:3])
     //     | 000  | 001  | 010  | 011   | 100    | 101    | 110    | 111 |
     // 000 |      |      |      |       |        |        |        |     |
@@ -93,12 +96,16 @@ always_comb begin
     // 101 | AND  | OR   | XOR  | XNOR  | SHL    | SHR    | SRA    |     |
     // 110 | ADDC | SUBC |      |       | CMPEQC | CMPLTC | CMPLEC |     |
     // 111 | ANDC | ORC  | XORC | XNORC | SHLC   | SHRC   | SRAC   |     |
+    ///////////////////////////////////////////////////////////////////////////
 
     opc = opcode[5] && opcode[4];
     op = opcode[5] && !opcode[4];
 
     op_st = !opcode[5] && !opcode[2] && !opcode[1] && opcode[0];
     op_ld = !opcode[5] && !opcode[2] && !opcode[1] && !opcode[0];
+    op_jmp = !opcode[5] + !opcode[2] + opcode[1] + opcode[0];
+    op_beq = !opcode[5] + opcode[2] + !opcode[1] + !opcode[0];
+    op_bne = !opcode[5] + opcode[2] + !opcode[1] + opcode[0];
     op_ld_or_st = !opcode[5] && !opcode[2] && !opcode[1];
     op_ldr = opcode[0] && opcode[1] && opcode[2];
     op_ld_or_ldr = op_ld || op_ldr;

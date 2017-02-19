@@ -3,6 +3,7 @@
 //  Author: Stefan Dumitrescu
 //  
 //  Description: This file contains the register file implementation
+//  TODO: Fix bypass logic
 ///////////////////////////////////////////////////////////////////////////////
 
 module reg_file(
@@ -13,8 +14,11 @@ module reg_file(
     input logic [14:0] ir_exec      // instruction register in execute stage
     input logic [14:0] ir_mem       // instruction register in mem access stage
     input logic [14:0] ir_wb        // instruction register in write back stage
-    logic opcode_type_op,           // opcode is of class OP
-    logic opcode_ld_ldr,            // opcode is LD or LDR
+    input logic opcode_type_op,     // opcode is of class OP
+    input logic opcode_ld_ldr_exec, // opcode is LD or LDR in exec stage
+    input logic opcode_ld_ldr_mem,  // opcode is LD or LDR in mem stage
+    input logic opcode_ld_ldr_wb,   // opcode is LD or LDR in wb stage
+    output logic stall,             // stall control signal
 
     // datapath signals
     input logic [5:0] ra1,          // read address 1
@@ -40,7 +44,7 @@ logic ra_dec_eq_rc_wb,              // Ra in decode == Rc in write back
 logic rb_dec_eq_rc_ex,              // Rb in decode == Rc in exec
 logic rb_dec_eq_rc_mem,             // Rb in decode == Rc in memory access
 logic rb_dec_eq_rc_wb,              // Rb in decode == Rc in write back
-            
+
 always_comb begin
     rd1_0 = mem[ra1];
     rd2_0 = mem[ra2];
@@ -52,11 +56,19 @@ always_comb begin
     rb_dec_eq_rc_mem = ir_decode[4:0] == ir_mem[14:10];
     rb_dec_eq_rc_wb = ir_decode[4:0] == ir_wb[14:10];
 
-    if (ra_dec_eq_rc_ex && !opcode_ld_ldr) begin
+    stall = opcode_ld_ldr_exec && ra_dec_eq_rc_ex ||
+            opcode_ld_ldr_mem && ra_dec_eq_rc_mem ||
+            opcode_ld_ldr_wb && ra_dec_eq_rc_wb ||
+            opcode_type_op && (
+            opcode_ld_ldr_exec && rb_dec_eq_rc_ex ||
+            opcode_ld_ldr_mem && rb_dec_eq_rc_mem ||
+            opcode_ld_ldr_wb && rb_dec_eq_rc_wb);
+
+    if (ra_dec_eq_rc_ex && !opcode_ld_ldr_exec) begin
         rd1 = exec_bypass;
-    end else if (ra_dec_eq_rc_mem && !opcode_ld_ldr) begin
+    end else if (ra_dec_eq_rc_mem && !opcode_ld_ldr_mem) begin
         rd1 = mem_bypass;
-    end else if (ra_dec_eq_rc_wb && !opcode_ld_ldr) begin
+    end else if (ra_dec_eq_rc_wb && !opcode_ld_ldr_wb) begin
         rd1 = wb_bypass;
     end else if (we && wa == ra1) begin
         rd1 = wd;
@@ -64,11 +76,11 @@ always_comb begin
         rd1 = rd1_0;
     end
 
-    if (rb_dec_eq_rc_ex && !opcode_ld_ldr && opcode_type_op) begin
+    if (rb_dec_eq_rc_ex && !opcode_ld_ldr_exec && opcode_type_op) begin
         rd2 = exec_bypass;
-    end else if (rb_dec_eq_rc_mem && !opcode_ld_ldr && opcode_type_op) begin
+    end else if (rb_dec_eq_rc_mem && !opcode_ld_ldr_mem && opcode_type_op) begin
         rd2 = mem_bypass;
-    end else if (rb_dec_eq_rc_wb && !opcode_ld_ldr && opcode_type_op) begin
+    end else if (rb_dec_eq_rc_wb && !opcode_ld_ldr_wb && opcode_type_op) begin
         rd2 = wb_bypass;
     end else if (we && wa == ra2) begin
         rd2 = wd;

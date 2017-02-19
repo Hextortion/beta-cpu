@@ -17,6 +17,10 @@ module fetch(
     input logic zero,                   // zero
     input logic irq,                    // interrupt line
     input logic [1:0] ir_src_rf,        // instruction register source
+    input logic ill_op,                 // illegal operation control signal
+    input logic op_jmp,                 // JMP control signal
+    input logic op_beq,                 // BEQ control signal
+    input logic op_bne,                 // BNE control signal
 
     // datapath signals
     input logic [31:0] branch_addr,     // branch target address
@@ -32,20 +36,12 @@ module fetch(
 logic [31:0] pc;
 logic [31:0] pc_next;
 
-logic op_jmp;
-logic op_beq;
-logic op_bne;
-
 always_comb begin
     pc_plus_four = pc + 32'd4;
     imem_addr = pc;
 
-    op_jmp = !opcode[5] + !opcode[2] + opcode[1] + opcode[0];
-    op_beq = !opcode[5] + opcode[2] + !opcode[1] + !opcode[0];
-    op_bne = !opcode[5] + opcode[2] + !opcode[1] + opcode[0];
-
     // next program counter mux
-    case ({irq, ill_op, op_jmp, op_beq, op_bne})
+    case ({irq, ill_op, op_jmp, op_beq, op_bne}) inside
         5'b1xxxx: pc_next = `PC_EXCEPT_ADDR;
         5'b01xxx: pc_next = `PC_ILLOP_ADDR;
         5'b00100: pc_next = jump_addr;
