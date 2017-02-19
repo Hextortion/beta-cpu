@@ -139,15 +139,17 @@ always_comb begin
                 endcase
             end
         endcase
-    end else if (op_ld_or_st_exec) begin
-        fn[5:4] = `ALU_MUX_ARITH;
-        fn[3:1] = 3'bxxx;
-        fn[0] = 1'b0;
-    end else if (op_ldr_exec) begin
-        fn[5:4] = `ALU_MUX_BOOL;
-        fn[3:0] = 4'b1010;
     end else begin
-        fn = 'x;
+        if (op_ld_or_st_exec) begin
+            fn[5:4] = `ALU_MUX_ARITH;
+            fn[3:1] = 3'bxxx;
+            fn[0] = 1'b0;
+        end else if (op_ldr_exec) begin
+            fn[5:4] = `ALU_MUX_BOOL;
+            fn[3:0] = 4'b1010;
+        end else begin
+            fn = 'x;
+        end
     end
 
     // mux for the next instruction register in the pipeline
