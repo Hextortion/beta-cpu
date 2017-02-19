@@ -3,7 +3,6 @@
 //  Author: Stefan Dumitrescu
 //  
 //  Description: This file contains the implementaion of decode stage
-//  TODO: Add bypassing logic
 ///////////////////////////////////////////////////////////////////////////////
 
 `include "defines.v"
@@ -13,7 +12,7 @@ module decode(
 
     // datapath signals
     input logic [31:0] pc_plus_four,    // PC + 4
-    input logic [31:0] inst             // instruction that has been fetched
+    input logic [31:0] inst,            // instruction that has been fetched
 
     output logic [31:0] jump_addr,      // jump target address
     output logic [31:0] branch_addr,    // branch target address
@@ -26,8 +25,13 @@ module decode(
     output logic [31:0] inst_next,      // instruction output for next stage
 
     // control signals
-    input logic [1:0] ir_src_dec        // source for next instruction register
+    input logic [1:0] ir_src_dec,       // source for next instruction register
     output logic zero,                  // zero detected
+
+    // portions of instructions containing register numbers
+    input logic [14:0] ir_exec,         // instruction in execute stage
+    input logic [14:0] ir_mem,          // instruction in mem access stage
+    input logic [14:0] ir_wb,           // instruction in write back stage
 
     // bypass signals
     input logic [31:0] ex_bypass,       // execution stage bypass
@@ -51,6 +55,12 @@ logic op_st;
 logic op_ld;
 logic op_ldr;
 logic op;
+logic opc;
+logic op_ld_or_ldr;
+logic jump;
+logic a_sel;
+logic b_sel;
+logic stall;
 
 logic ra2_sel;
 logic [4:0] ra1;
@@ -64,21 +74,25 @@ always_comb begin
     rb = ir_decode[15:11];
     rc = ir_decode[25:21];
     constant = ir_decode[15:0];
-
-    ra1 = ra;
-    ra2_sel = op_st;
-    ra2 = ra2_sel ? rc ? rb;
     
     zero = ~|rd1;
     jump = rd1;
 
     // set the branch address to PC_decode + 4 + 4 * SXT(C)
-    branch_addr = pc_decode + 32'd4 + {14{constant[15]}, constant, 2'b00};
+    branch_addr = pc_decode + 32'd4 + {{14{constant[15]}}, constant, 2'b00};
 
     opc = opcode[5] && opcode[4];
+    op = opcode[5] && !opcode[4];
+
     op_st = !opcode[5] && !opcode[2] && !opcode[1] && opcode[0];
     op_ld = !opcode[5] && !opcode[2] && !opcode[1] && !opcode[0];
     op_ldr = opcode[0] && opcode[1] && opcode[2];
+    op_ld_or_ldr = op_ld || op_ldr;
+
+    ra1 = ra;
+    ra2_sel = op_st;
+    ra2 = ra2_sel ? rc : rb;
+
     a_sel = op_ldr;
     a_reg = a_sel ? branch_addr : rd1;
     b_sel = op_ld || opc || op_st;
@@ -86,7 +100,7 @@ always_comb begin
     st_data = rd2;
 
     // B = BSEL ? SXT(C) : RD2
-    b_reg = b_sel ? {16{constant[15]}, constant} : rd2;
+    b_reg = b_sel ? {{16{constant[15]}}, constant} : rd2;
 
     // mux for the next instruction register in the pipeline
     case (ir_src_dec)
@@ -106,13 +120,25 @@ end
 
 reg_file rf(
     .clk(clk),
+
+    .ir_decode(ir_decode[25:11]),
+    .ir_exec(ir_exec),
+    .ir_mem(ir_mem),
+    .ir_wb(ir_wb),
+    .opcode_type_op(op),
+    .opcode_ld_ldr(op_ld_or_ldr),
+
     .ra1(ra1),
     .ra2(ra2),
     .rd1(rd1),
     .rd2(rd2),
     .we(rf_we),
     .wa(ra_w_addr),
-    .wd(rf_w_data)
+    .wd(rf_w_data),
+
+    .exec_bypass(exec_bypass),
+    .mem_bypass(mem_bypass),
+    .wb_bypass(wb_bypass)
 );
 
 endmodule
