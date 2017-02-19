@@ -12,10 +12,15 @@ module mem_access(
 
     // control signals
     input logic [1:0] ir_src_mem,           // instruction register source
-    input logic mem_oe,                     // memory output enable
-    input logic mem_wr,                     // memory write enable
+    output logic mem_wr,                    // memory write enable
+    output logic [31:0] mem_w_data,         // memory write data
+    output logic [31:0] mem_w_addr,         // memory write address
+    input logic op_st_ldr,                  // next op_st value for this stage
+    output logic op_st_next,                // next op_st value for next stage
     input logic op_ld_or_ldr,               // next op_ld_or_ldr value for this stage
     output logic op_ld_or_ldr_next,         // next op_ld_or_ldr value for next stage
+    input logic rf_w_mux_jump,              // next rf_w_mux_jump value for this stage
+    output logic rf_w_mux_jump_next,        // next rf_w_mux_jump value for next stage
 
     // datapath signals
     input logic [31:0] pc,                  // next pc value for this stage
@@ -32,6 +37,8 @@ logic [31:0] pc_mem;
 logic [31:0] ir_mem;
 logic [31:0] y_mem;
 logic [31:0] d_mem;
+logic op_st;
+logic [5:0] opcode;
 
 always_ff @(posedge clk) begin
     pc_mem <= pc;
@@ -39,6 +46,8 @@ always_ff @(posedge clk) begin
     y_mem <= y;
     d_mem <= d;
     op_ld_or_ldr_next <= op_ld_or_ldr;
+    op_st_next <= op_st;
+    rf_w_mux_jump_next <= rf_w_mux_jump;
 end
 
 always_comb begin
@@ -52,6 +61,10 @@ always_comb begin
 
     pc_next = pc_mem;
     y_next = y_mem;
+    mem_wr = !op_st_next;
+
+    mem_w_addr = y_mem;
+    mem_w_data = d_mem;
 end
 
 endmodule

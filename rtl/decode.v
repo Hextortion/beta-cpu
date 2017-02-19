@@ -33,6 +33,9 @@ module decode(
     // control signals
     input logic [1:0] ir_src_dec,       // source for next instruction register
     output logic zr,                    // zero detected
+    output logic rf_w_mux_jump_next,    // next value of rf_w_mux_jump for next stage
+    output logic op_ld_or_ldr_next,     // LD or LDR from this stage
+    output logic op_st_next,            // ST from this stage
     input logic op_ld_or_ldr_exec,      // LD or LDR from exec stage
     input logic op_ld_or_ldr_mem,       // LD or LDR from mem access stage
     input logic op_ld_or_ldr_wb,        // LD or LDR from write back stage
@@ -61,7 +64,6 @@ logic [4:0] rb;
 logic [4:0] rc;
 logic [15:0] constant;
 
-logic op_st;
 logic op_ld;
 logic op_ld_or_ldr;
 logic op;
@@ -105,27 +107,29 @@ always_comb begin
     opc = opcode[5] && opcode[4];
     op = opcode[5] && !opcode[4];
 
-    op_st = !opcode[5] && !opcode[2] && !opcode[1] && opcode[0];
+    op_st_next = !opcode[5] && !opcode[2] && !opcode[1] && opcode[0];
     op_ld = !opcode[5] && !opcode[2] && !opcode[1] && !opcode[0];
     op_jmp = !opcode[5] + !opcode[2] + opcode[1] + opcode[0];
     op_beq = !opcode[5] + opcode[2] + !opcode[1] + !opcode[0];
     op_bne = !opcode[5] + opcode[2] + !opcode[1] + opcode[0];
     op_ld_or_st = !opcode[5] && !opcode[2] && !opcode[1];
     op_ldr = opcode[0] && opcode[1] && opcode[2];
-    op_ld_or_ldr = op_ld || op_ldr;
+    op_ld_or_ldr_next = op_ld || op_ldr;
 
     ra1 = ra;
-    ra2_sel = op_st;
+    ra2_sel = op_st_next;
     ra2 = ra2_sel ? rc : rb;
 
     a_sel = op_ldr;
     a_next = a_sel ? br_addr : rd1;
-    b_sel = op_ld || opc || op_st;
+    b_sel = op_ld || opc || op_st_next;
 
     d_next = rd2;
 
     // B = BSEL ? SXT(C) : RD2
     b_next = b_sel ? {{16{constant[15]}}, constant} : rd2;
+
+    rf_w_mux_jump_next = op_jmp || op_bne || op_beq;
 
     // mux for the next instruction register in the pipeline
     case (ir_src_dec)

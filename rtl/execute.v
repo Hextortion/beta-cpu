@@ -16,6 +16,10 @@ module execute(
     input logic op_ld_or_ldr,               // next op_ld_or_ldr value for this stage
     input logic op_ldr,                     // next ldr value for this stage
     output logic op_ld_or_ldr_next,         // next op_ld_or_ldr value for next stage
+    input logic op_st,                      // next op_st value for this stage
+    output logic op_st_next,                // next op_st value for next stage
+    input logic rf_w_mux_jump,              // next rf_w_mux_jump value for this stage
+    output logic rf_w_mux_jump_next,        // next rf_w_mux_jump value for next stage
 
     // datapath signals
     input logic [31:0] pc,                  // next pc value for this stage
@@ -52,6 +56,8 @@ always_ff @(posedge clk) begin
     op_ld_or_st_exec <= op_ld_or_st;
     op_ldr_exec <= op_ldr;
     op_ld_or_ldr_next <= op_ld_or_ldr;
+    op_st_next <= op_st;
+    rf_w_mux_jump_next <= rf_w_mux_jump;
 end
 
 always_comb begin

@@ -53,9 +53,18 @@ logic [4:0] rf_w_addr;
 logic [31:0] rf_w_data;
 logic rf_we;
 
+logic op_st_decode;
+logic op_st_exec;
+logic op_st_mem;
+
+logic op_ld_or_ldr_decode;
 logic op_ld_or_ldr_exec;
 logic op_ld_or_ldr_mem;
 logic op_ld_or_ldr_wb;
+
+logic rf_w_mux_jump_decode;
+logic rf_w_mux_jump_exec;
+logic rf_w_mux_jump_mem;
 
 fetch fetch0(
     .clk(clk),
@@ -94,6 +103,9 @@ decode decode0(
     .op_bne(op_bne),
     .ir_src_dec(`IR_SRC_DATA),
     .zr(zr),
+    .op_ld_or_ldr_next(op_ld_or_ldr_decode),
+    .op_st_next(op_st_decode),
+    .rf_w_mux_jump_next(rf_w_mux_jump_decode),
     .op_ld_or_ldr_exec(op_ld_or_ldr_exec),
     .op_ld_or_ldr_mem(op_ld_or_ldr_mem),
     .op_ld_or_ldr_wb(op_ld_or_ldr_wb),
@@ -111,6 +123,10 @@ decode decode0(
 execute execute0(
     .clk(clk),
     .ir_src_exec(`IR_SRC_DATA),
+    .op_st(op_st_decode),
+    .op_st_next(op_st_exec),
+    .rf_w_mux_jump(rf_w_mux_jump_decode),
+    .rf_w_mux_jump_next(rf_w_mux_jump_exec),
     .op_ld_or_st(op_ld_or_st),
     .op_ld_or_ldr(op_ld_or_ldr),
     .op_ldr(op_ldr),
@@ -132,6 +148,10 @@ mem_access mem_access0(
     .mem_wr(d_mem_wr),
     .op_ld_or_ldr(op_ld_or_ldr_exec),
     .op_ld_or_ldr_next(op_ld_or_ldr_mem),
+    .op_st(op_st_exec),
+    .op_st_next(op_st_mem),
+    .rf_w_mux_jump(rf_w_mux_jump_exec),
+    .rf_w_mux_jump_next(rf_w_mux_jump_mem),
     .pc(pc_exec),
     .ir(ir_exec),
     .y(y_exec),
@@ -145,6 +165,8 @@ wb wb0(
     .clk(clk),
     .op_ld_or_ldr(op_ld_or_ldr_exec),
     .op_ld_or_ldr_next(op_ld_or_ldr_wb),
+    .op_st(op_st_mem),
+    .rf_w_mux_jump(rf_w_mux_jump_mem),
     .pc(pc_mem),
     .ir(ir_mem),
     .y(y_mem),
