@@ -11,18 +11,18 @@ module decode(
     input logic clk,                    // clock   
 
     // datapath signals
-    input logic [31:0] pc_plus_four,    // PC + 4
-    input logic [31:0] inst,            // instruction that has been fetched
+    input logic [31:0] pc,              // PC + 4
+    input logic [31:0] ir,              // instruction that has been fetched
 
-    output logic [31:0] jump_addr,      // jump target address
-    output logic [31:0] branch_addr,    // branch target address
-    output logic [31:0] st_data,        // store data for mem access stage
+    output logic [31:0] j_addr,         // jump target address
+    output logic [31:0] br_addr,        // branch target address
+    output logic [31:0] d_next,         // store data for mem access stage
 
-    output logic [31:0] a_reg,          // output for register A in ALU stage
-    output logic [31:0] b_reg,          // output for register B in ALU stage
+    output logic [31:0] a_next,         // output for register A in ALU stage
+    output logic [31:0] b_next,         // output for register B in ALU stage
 
-    output logic [31:0] pc_decode,      // pc output for next stage
-    output logic [31:0] inst_next,      // instruction output for next stage
+    output logic [31:0] pc_next,        // pc output for next stage
+    output logic [31:0] ir_next,        // instruction output for next stage
 
     output logic op_ld_or_st,           // LD or ST control signal
     output logic op_ldr,                // LDR control signal
@@ -32,7 +32,7 @@ module decode(
 
     // control signals
     input logic [1:0] ir_src_dec,       // source for next instruction register
-    output logic zero,                  // zero detected
+    output logic zr,                    // zero detected
 
     // portions of instructions containing register numbers
     input logic [14:0] ir_exec,         // instruction in execute stage
@@ -79,11 +79,11 @@ always_comb begin
     rc = ir_decode[25:21];
     constant = ir_decode[15:0];
     
-    zero = ~|rd1;
-    jump_addr = rd1;
+    zr = ~|rd1;
+    j_addr = rd1;
 
     // set the branch address to PC_decode + 4 + 4 * SXT(C)
-    branch_addr = pc_decode + 32'd4 + {{14{constant[15]}}, constant, 2'b00};
+    br_addr = pc_decode + 32'd4 + {{14{constant[15]}}, constant, 2'b00};
 
     ///////////////////////////////////////////////////////////////////////////
     // Opcode Table (columns = opcode[2:0], rows = opcode[5:3])
@@ -118,24 +118,24 @@ always_comb begin
     a_reg = a_sel ? branch_addr : rd1;
     b_sel = op_ld || opc || op_st;
 
-    st_data = rd2;
+    d_next = rd2;
 
     // B = BSEL ? SXT(C) : RD2
     b_reg = b_sel ? {{16{constant[15]}}, constant} : rd2;
 
     // mux for the next instruction register in the pipeline
     case (ir_src_dec)
-        `IR_SRC_EXCEPT: inst_next = `INST_BNE_EXCEPT;
-        `IR_SRC_NOP: inst_next = `INST_NOP;
-        `IR_SRC_DATA: inst_next = ir_decode;
-        default: inst_next = 'x;
+        `IR_SRC_EXCEPT: ir_next = `INST_BNE_EXCEPT;
+        `IR_SRC_NOP: ir_next = `INST_NOP;
+        `IR_SRC_DATA: ir_next = ir_decode;
+        default: ir_next = 'x;
     endcase
 end
 
 always_ff @(posedge clk) begin
-    ir_decode <= inst;
+    ir_decode <= ir;
     if (~stall) begin
-        pc_decode <= pc_plus_four;
+        pc_decode <= pc;
     end
 end
 

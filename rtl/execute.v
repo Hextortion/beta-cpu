@@ -12,20 +12,22 @@ module execute(
 
     // control signals
     input logic [1:0] ir_src_exec,          // instruction register source
-    input logic op_ld_or_st_next,           // next ld_or_st value
-    input logic op_ldr_next,                // next ldr value
+    input logic op_ld_or_st,                // next op_ld_or_st value for this stage
+    input logic op_ld_or_ldr,               // next op_ld_or_ldr value for this stage
+    input logic op_ldr,                     // next ldr value for this stage
+    output logic op_ld_or_ldr_next          // next op_ld_or_ldr value for next stage
 
     // datapath signals
-    input logic [31:0] pc_exec_next,        // next pc value for this stage
-    input logic [31:0] ir_exec_next,        // next ir value for this stage
-    input logic [31:0] a_exec_next,         // next a value for this stage
-    input logic [31:0] b_exec_next,         // next b value for this stage
-    input logic [31:0] st_exec_next,        // next st value for this stage
+    input logic [31:0] pc,                  // next pc value for this stage
+    input logic [31:0] ir,                  // next ir value for this stage
+    input logic [31:0] a,                   // next a value for this stage
+    input logic [31:0] b,                   // next b value for this stage
+    input logic [31:0] d,                   // next d value for this stage
 
-    output logic [31:0] pc_mem_next,        // next pc value for the next stage
-    output logic [31:0] ir_mem_next,        // next ir value for the next stage
-    output logic [31:0] y_mem_next,         // next y value for the next stage
-    output logic [31:0] st_mem_next         // next st value for the next stage
+    output logic [31:0] pc_next,            // next pc value for the next stage
+    output logic [31:0] ir_next,            // next ir value for the next stage
+    output logic [31:0] y_next,             // next y value for the next stage
+    output logic [31:0] d_next              // next d value for the next stage
 );
 
 // pipeline registers for the execute stage
@@ -33,7 +35,7 @@ logic [31:0] pc_exec;
 logic [31:0] ir_exec;
 logic [31:0] a_exec;
 logic [31:0] b_exec;
-logic [31:0] st_exec;
+logic [31:0] d_exec;
 
 logic op_ld_or_st_exec;
 logic op_ldr_exec;
@@ -42,13 +44,14 @@ logic [5:0] opcode;
 logic [5:0] fn;
 
 always_ff @(posedge clk) begin
-    pc_exec <= pc_exec_next;
-    ir_exec <= ir_exec_next;
-    a_exec <= a_exec_next;
-    b_exec <= b_exec_next;
-    st_exec <= st_exec_next;
-    op_ld_or_st_exec <= op_ld_or_st_next;
-    op_ldr_exec <= op_ldr_next;
+    pc_exec <= pc;
+    ir_exec <= ir;
+    a_exec <= a;
+    b_exec <= b;
+    d_exec <= d;
+    op_ld_or_st_exec <= op_ld_or_st;
+    op_ldr_exec <= op_ldr;
+    op_ld_or_ldr_next <= op_ld_or_ldr;
 end
 
 always_comb begin
@@ -154,10 +157,10 @@ always_comb begin
 
     // mux for the next instruction register in the pipeline
     case (ir_src_exec)
-        `IR_SRC_EXCEPT: ir_mem_next = `INST_BNE_EXCEPT;
-        `IR_SRC_NOP: ir_mem_next = `INST_NOP;
-        `IR_SRC_DATA: ir_mem_next = ir_exec;
-        default: ir_mem_next = 'x;
+        `IR_SRC_EXCEPT: ir_next = `INST_BNE_EXCEPT;
+        `IR_SRC_NOP: ir_next = `INST_NOP;
+        `IR_SRC_DATA: ir_next = ir_exec;
+        default: ir_next = 'x;
     endcase
 end
 
@@ -165,7 +168,7 @@ alu alu0(
     .fn(fn),
     .a(a_exec),
     .b(b_exec),
-    .y(y_mem_next)
+    .y(y_next)
 );
 
 endmodule
