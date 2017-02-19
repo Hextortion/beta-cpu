@@ -60,9 +60,4 @@
 `define ALU_MUX_BOOL 2'b10
 `define ALU_MUX_SHIFT 2'b11
 
-// WD MUX defines
-`define WD_SRC_MEM 2'b10
-`define WD_SRC_Y 2'b01
-`define WD_SRC_PC 2'b00
-
 `endif
