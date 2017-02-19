@@ -24,6 +24,9 @@ module decode(
     output logic [31:0] pc_decode,      // pc output for next stage
     output logic [31:0] inst_next,      // instruction output for next stage
 
+    output logic op_ld_or_st,           // LD or ST control signal
+    output logic op_ldr,                // LDR control signal
+
     // control signals
     input logic [1:0] ir_src_dec,       // source for next instruction register
     output logic zero,                  // zero detected
@@ -53,10 +56,9 @@ logic [15:0] constant;
 
 logic op_st;
 logic op_ld;
-logic op_ldr;
+logic op_ld_or_ldr;
 logic op;
 logic opc;
-logic op_ld_or_ldr;
 logic jump;
 logic a_sel;
 logic b_sel;
@@ -81,11 +83,23 @@ always_comb begin
     // set the branch address to PC_decode + 4 + 4 * SXT(C)
     branch_addr = pc_decode + 32'd4 + {{14{constant[15]}}, constant, 2'b00};
 
+    // Opcode Table (columns = opcode[2:0], rows = opcode[5:3])
+    //     | 000  | 001  | 010  | 011   | 100    | 101    | 110    | 111 |
+    // 000 |      |      |      |       |        |        |        |     |
+    // 001 |      |      |      |       |        |        |        |     |
+    // 010 |      |      |      |       |        |        |        |     |
+    // 011 | LD   | ST   |      | JMP   | BEQ    | BNE    |        | LDR |
+    // 100 | ADD  | SUB  |      |       | CMPEQ  | CMPLT  | CMPLE  |     |
+    // 101 | AND  | OR   | XOR  | XNOR  | SHL    | SHR    | SRA    |     |
+    // 110 | ADDC | SUBC |      |       | CMPEQC | CMPLTC | CMPLEC |     |
+    // 111 | ANDC | ORC  | XORC | XNORC | SHLC   | SHRC   | SRAC   |     |
+
     opc = opcode[5] && opcode[4];
     op = opcode[5] && !opcode[4];
 
     op_st = !opcode[5] && !opcode[2] && !opcode[1] && opcode[0];
     op_ld = !opcode[5] && !opcode[2] && !opcode[1] && !opcode[0];
+    op_ld_or_st = !opcode[5] && !opcode[2] && !opcode[1];
     op_ldr = opcode[0] && opcode[1] && opcode[2];
     op_ld_or_ldr = op_ld || op_ldr;
 
