@@ -13,13 +13,13 @@ module core(
     input logic rst,                    // reset
 
     // memory signals
-    input logic [31:0] i_mem_data,
-    output logic [31:0] i_mem_addr,
-    input logic [31:0] d_mem_w_data,
-    output logic [31:0] d_mem_w_addr,
-    input logic [31:0] d_mem_r_data,
-    output logic [31:0] d_mem_we,
-    output logic [31:0] d_mem_oe
+    input logic [31:0] i_mem_r_data,    // instruction memory read data
+    output logic [31:0] i_mem_r_addr,   // instruction memory read address
+    output logic [31:0] d_mem_w_data,   // data memory write data
+    output logic [31:0] d_mem_w_addr,   // data memory write address
+    input logic [31:0] d_mem_r_data,    // data memory read data
+    output logic [31:0] d_mem_we,       // data memory write enable
+    output logic [31:0] d_mem_oe        // data memory output enable
 );
 
 logic stall;
@@ -94,6 +94,9 @@ decode decode0(
     .op_bne(op_bne),
     .ir_src_dec(`IR_SRC_DATA),
     .zr(zr),
+    .op_ld_or_ldr_exec(op_ld_or_ldr_exec),
+    .op_ld_or_ldr_mem(op_ld_or_ldr_mem),
+    .op_ld_or_ldr_wb(op_ld_or_ldr_wb),
     .ir_exec(ir_exec),
     .ir_mem(ir_mem),
     .ir_wb(ir_wb),
@@ -132,7 +135,7 @@ mem_access mem_access0(
     .pc(pc_exec),
     .ir(ir_exec),
     .y(y_exec),
-    .d(d_exec)
+    .d(d_exec),
     .pc_next(pc_mem),
     .ir_next(ir_mem),
     .y_next(y_mem)
@@ -144,6 +147,7 @@ wb wb0(
     .op_ld_or_ldr_next(op_ld_or_ldr_wb),
     .pc(pc_mem),
     .ir(ir_mem),
+    .y(y_mem),
     .mem_rd(d_mem_r_data),
     .rf_w_data(rf_w_data),
     .rf_w_addr(rf_w_addr)

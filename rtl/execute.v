@@ -15,7 +15,7 @@ module execute(
     input logic op_ld_or_st,                // next op_ld_or_st value for this stage
     input logic op_ld_or_ldr,               // next op_ld_or_ldr value for this stage
     input logic op_ldr,                     // next ldr value for this stage
-    output logic op_ld_or_ldr_next          // next op_ld_or_ldr value for next stage
+    output logic op_ld_or_ldr_next,         // next op_ld_or_ldr value for next stage
 
     // datapath signals
     input logic [31:0] pc,                  // next pc value for this stage
@@ -162,6 +162,9 @@ always_comb begin
         `IR_SRC_DATA: ir_next = ir_exec;
         default: ir_next = 'x;
     endcase
+
+    pc_next = pc_exec;
+    d_next = d_exec;
 end
 
 alu alu0(

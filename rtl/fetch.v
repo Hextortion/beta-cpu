@@ -27,7 +27,7 @@ module fetch(
     input logic [31:0] j_addr,          // jump target address
 
     input logic [31:0] i_mem_data,      // instruction memory data
-    output logic [31:0] i_mem_addr      // instruction memory address
+    output logic [31:0] i_mem_addr,     // instruction memory address
 
     output logic [31:0] pc_next,        // next pc value for next stage
     output logic [31:0] ir_next         // next ir value for next stage
@@ -71,3 +71,5 @@ always_ff @(posedge clk) begin
         end
     end
 end
+
+endmodule

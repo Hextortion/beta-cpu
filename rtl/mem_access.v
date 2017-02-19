@@ -11,7 +11,7 @@ module mem_access(
     input logic clk,                        // clock
 
     // control signals
-    input logic [1:0] ir_src_mem            // instruction register source
+    input logic [1:0] ir_src_mem,           // instruction register source
     input logic mem_oe,                     // memory output enable
     input logic mem_wr,                     // memory write enable
     input logic op_ld_or_ldr,               // next op_ld_or_ldr value for this stage
@@ -25,7 +25,7 @@ module mem_access(
 
     output logic [31:0] pc_next,            // next pc value for the next stage
     output logic [31:0] ir_next,            // next ir value for the next stage
-    output logic [31:0] y_next,             // next y value for the next stage
+    output logic [31:0] y_next              // next y value for the next stage
 );
 
 logic [31:0] pc_mem;
@@ -49,6 +49,9 @@ always_comb begin
         `IR_SRC_DATA: ir_next = ir_mem;
         default: ir_next = 'x;
     endcase
+
+    pc_next = pc_mem;
+    y_next = y_mem;
 end
 
 endmodule

@@ -17,22 +17,23 @@ module wb(
     // datapath signals
     input logic [31:0] pc,                  // next pc value for this stage
     input logic [31:0] ir,                  // next ir value for this stage
+    input logic [31:0] y,                   // next y value for this stage
     input logic [31:0] mem_rd,              // output of memory read
 
     output logic [31:0] rf_w_data,          // reg file write data
-    output logic [4:0] rf_w_addr,           // reg file write address
+    output logic [4:0] rf_w_addr            // reg file write address
 );
 
 logic [31:0] pc_wb;
 logic [31:0] ir_wb;
 logic [31:0] y_wb;
 logic [31:0] st_wb;
+logic [31:0] wd_sel;
 
 always_ff @(posedge clk) begin
-    pc_wb <= pc_wb_next;
-    ir_wb <= ir_wb_next;
-    y_wb <= y_wb_next;
-    st_wb <= st_wb_next;
+    pc_wb <= pc;
+    ir_wb <= ir;
+    y_wb <= y;
     op_ld_or_ldr_next <= op_ld_or_ldr;
 end
 
@@ -45,3 +46,5 @@ always_comb begin
         default: rf_w_data = 'x;
     endcase
 end
+
+endmodule

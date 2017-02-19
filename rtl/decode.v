@@ -33,6 +33,9 @@ module decode(
     // control signals
     input logic [1:0] ir_src_dec,       // source for next instruction register
     output logic zr,                    // zero detected
+    input logic op_ld_or_ldr_exec,      // LD or LDR from exec stage
+    input logic op_ld_or_ldr_mem,       // LD or LDR from mem access stage
+    input logic op_ld_or_ldr_wb,        // LD or LDR from write back stage
 
     // portions of instructions containing register numbers
     input logic [14:0] ir_exec,         // instruction in execute stage
@@ -50,6 +53,7 @@ module decode(
     input logic rf_we                   // register file write enable
 );
 
+logic [31:0] pc_decode;
 logic [31:0] ir_decode;
 logic [5:0] opcode;
 logic [4:0] ra;
@@ -115,13 +119,13 @@ always_comb begin
     ra2 = ra2_sel ? rc : rb;
 
     a_sel = op_ldr;
-    a_reg = a_sel ? branch_addr : rd1;
+    a_next = a_sel ? br_addr : rd1;
     b_sel = op_ld || opc || op_st;
 
     d_next = rd2;
 
     // B = BSEL ? SXT(C) : RD2
-    b_reg = b_sel ? {{16{constant[15]}}, constant} : rd2;
+    b_next = b_sel ? {{16{constant[15]}}, constant} : rd2;
 
     // mux for the next instruction register in the pipeline
     case (ir_src_dec)
@@ -130,6 +134,8 @@ always_comb begin
         `IR_SRC_DATA: ir_next = ir_decode;
         default: ir_next = 'x;
     endcase
+
+    pc_next = pc_decode;
 end
 
 always_ff @(posedge clk) begin
@@ -147,7 +153,10 @@ reg_file rf(
     .ir_mem(ir_mem),
     .ir_wb(ir_wb),
     .opcode_type_op(op),
-    .opcode_ld_ldr(op_ld_or_ldr),
+
+    .op_ld_or_ldr_exec(op_ld_or_ldr_exec),
+    .op_ld_or_ldr_mem(op_ld_or_ldr_mem),
+    .op_ld_or_ldr_wb(op_ld_or_ldr_wb),
 
     .ra1(ra1),
     .ra2(ra2),
