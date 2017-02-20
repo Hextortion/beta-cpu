@@ -12,7 +12,7 @@ module wb(
 
     // control signals
     input logic op_ld_or_ldr,               // next op_ld_or_ldr value for this stage
-    output logic op_ld_or_ldr_next,         // next op_ld_or_ldr value
+    output logic op_ld_or_ldr_next,         // next op_ld_or_ldr value for next stage
     input logic op_st,                      // next op_st value for this stage
     input logic rf_w_mux_jump,              // next rf_w_mux_jump for this stage
 
@@ -30,12 +30,10 @@ module wb(
 logic [31:0] pc_wb;
 logic [31:0] ir_wb;
 logic [31:0] y_wb;
-logic [31:0] st_wb;
-logic op_st_next;
-logic op_jmp;
-logic op_beq;
-logic op_bne;
-logic jump;
+
+logic rf_w_mux_jump_wb;
+logic op_st_wb;
+
 logic [5:0] opcode;
 
 always_ff @(posedge clk) begin
@@ -43,15 +41,17 @@ always_ff @(posedge clk) begin
     ir_wb <= ir;
     y_wb <= y;
     op_ld_or_ldr_next <= op_ld_or_ldr;
-    op_st_next <= op_st;
+    op_st_wb <= op_st;
+    rf_w_mux_jump_wb <= rf_w_mux_jump;
 end
 
 always_comb begin
-    rf_we = !op_st;
+    rf_we = !op_st_wb;
+    opcode = ir_wb[31:26];
     rf_w_addr = ir_wb[25:21];
 
     // instruction register mux
-    case ({opcode[5], op_ld_or_ldr_next, rf_w_mux_jump}) inside
+    case ({opcode[5], op_ld_or_ldr_next, rf_w_mux_jump_wb}) inside
         5'b010: rf_w_data = mem_rd;
         5'b100: rf_w_data = y_wb;
         5'b001: rf_w_data = pc_wb;

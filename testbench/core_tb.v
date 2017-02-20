@@ -68,6 +68,12 @@ initial begin
     @(posedge clk);
     rst = 1;
     @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
     rst = 0;
 end
 

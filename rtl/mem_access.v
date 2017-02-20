@@ -37,7 +37,6 @@ logic [31:0] pc_mem;
 logic [31:0] ir_mem;
 logic [31:0] y_mem;
 logic [31:0] d_mem;
-logic [5:0] opcode;
 
 always_ff @(posedge clk) begin
     pc_mem <= pc;

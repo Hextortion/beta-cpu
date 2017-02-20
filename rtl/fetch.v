@@ -50,7 +50,7 @@ always_comb begin
         5'b00010: pc_fetch_next = zr ? br_addr : pc_plus_four;
         5'b00001: pc_fetch_next = zr ? pc_plus_four : br_addr;
         5'b00000: pc_fetch_next = pc_plus_four;
-        default: pc_fetch_next = 'x;    
+        default: pc_fetch_next = 'x;
     endcase
 
     // instruction register mux

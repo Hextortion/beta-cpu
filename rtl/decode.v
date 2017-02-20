@@ -8,7 +8,9 @@
 `include "defines.v"
 
 module decode(
-    input logic clk,                    // clock   
+    // clock and reset
+    input logic clk,                    // clock
+    input logic rst,                    // reset
 
     // datapath signals
     input logic [31:0] pc,              // PC + 4
@@ -66,7 +68,6 @@ logic [4:0] rc;
 logic [15:0] constant;
 
 logic op_ld;
-logic op_ld_or_ldr;
 logic op;
 logic opc;
 logic a_sel;
@@ -151,6 +152,7 @@ end
 
 reg_file rf(
     .clk(clk),
+    .rst(rst),
 
     .ir_decode(ir_decode[25:11]),
     .ir_exec(ir_exec),

@@ -18,8 +18,17 @@ restart -f
 view wave
 add wave clk
 add wave rst
-add wave -divider -heigh 10
-add wave dut/fetch0/stall
-add wave -hexadecimal dut/fetch0/pc_fetch
+add wave -divider -height 10
+add wave dut/fetch0/*
+add wave -divider -height 10
+add wave dut/decode0/*
+add wave -divider -height 10
+add wave dut/decode0/rf/*
+add wave -divider -height 10
+add wave dut/execute0/*
+add wave -divider -height 10
+add wave dut/mem_access0/*
+add wave -divider -height 10
+add wave dut/wb0/*
 
 run 1us

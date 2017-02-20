@@ -88,6 +88,7 @@ fetch fetch0(
 
 decode decode0(
     .clk(clk),
+    .rst(rst),
     .pc(pc_fetch),
     .ir(ir_fetch),
     .j_addr(j_addr),
@@ -126,7 +127,7 @@ execute execute0(
     .clk(clk),
     .ir_src_exec(`IR_SRC_DATA),
     .op_ld_or_st(op_ld_or_st),
-    .op_ld_or_ldr(op_ld_or_ldr),
+    .op_ld_or_ldr(op_ld_or_ldr_decode),
     .op_ldr(op_ldr),
     .op_ld_or_ldr_next(op_ld_or_ldr_exec),
     .op_st(op_st_decode),
@@ -167,7 +168,7 @@ mem_access mem_access0(
 
 wb wb0(
     .clk(clk),
-    .op_ld_or_ldr(op_ld_or_ldr_exec),
+    .op_ld_or_ldr(op_ld_or_ldr_mem),
     .op_ld_or_ldr_next(op_ld_or_ldr_wb),
     .op_st(op_st_mem),
     .rf_w_mux_jump(rf_w_mux_jump_mem),

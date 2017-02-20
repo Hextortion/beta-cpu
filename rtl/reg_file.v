@@ -6,7 +6,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 module reg_file(
+    // clock and reset
     input logic clk,                // clock
+    input logic rst,                // reset
 
     // control signals
     input logic [14:0] ir_decode,   // instruction register in decode stage
@@ -63,13 +65,17 @@ always_comb begin
     rb_dec_eq_rc_mem = ir_decode[4:0] == ir_mem[14:10];
     rb_dec_eq_rc_wb = ir_decode[4:0] == ir_wb[14:10];
 
-    stall = op_ld_or_ldr_exec && ra_dec_eq_rc_ex ||
-            op_ld_or_ldr_mem && ra_dec_eq_rc_mem ||
-            op_ld_or_ldr_wb && ra_dec_eq_rc_wb ||
-            opcode_type_op && (
-            op_ld_or_ldr_exec && rb_dec_eq_rc_ex ||
-            op_ld_or_ldr_mem && rb_dec_eq_rc_mem ||
-            op_ld_or_ldr_wb && rb_dec_eq_rc_wb);
+    if (rst) begin
+        stall = 1'b0;
+    end else begin
+        stall = op_ld_or_ldr_exec && ra_dec_eq_rc_ex ||
+                op_ld_or_ldr_mem && ra_dec_eq_rc_mem ||
+                op_ld_or_ldr_wb && ra_dec_eq_rc_wb ||
+                opcode_type_op && (
+                op_ld_or_ldr_exec && rb_dec_eq_rc_ex ||
+                op_ld_or_ldr_mem && rb_dec_eq_rc_mem ||
+                op_ld_or_ldr_wb && rb_dec_eq_rc_wb);
+    end
 
     if (ra1 == 5'd31) begin
         rd1 = 32'd0;
@@ -101,7 +107,7 @@ always_comb begin
 end
 
 always_ff @(posedge clk) begin
-    if (we) begin
+    if (we && wa != 5'd31) begin
         mem[wa] <= wd;
     end
 end
