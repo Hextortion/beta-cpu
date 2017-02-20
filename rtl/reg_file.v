@@ -44,6 +44,14 @@ logic rb_dec_eq_rc_ex;              // Rb in decode == Rc in exec
 logic rb_dec_eq_rc_mem;             // Rb in decode == Rc in memory access
 logic rb_dec_eq_rc_wb;              // Rb in decode == Rc in write back
 
+// This is a hack so that the simulation will work correctly.
+// TODO: Figure out how to set all the registers to zero on a reset
+initial begin
+    for (integer i = 0; i < 32; i++) begin
+        mem[i] = 32'd0;
+    end
+end
+
 always_comb begin
     rd1_0 = mem[ra1];
     rd2_0 = mem[ra2];
