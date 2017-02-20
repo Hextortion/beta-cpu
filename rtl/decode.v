@@ -109,9 +109,9 @@ always_comb begin
 
     op_st_next = !opcode[5] && !opcode[2] && !opcode[1] && opcode[0];
     op_ld = !opcode[5] && !opcode[2] && !opcode[1] && !opcode[0];
-    op_jmp = !opcode[5] + !opcode[2] + opcode[1] + opcode[0];
-    op_beq = !opcode[5] + opcode[2] + !opcode[1] + !opcode[0];
-    op_bne = !opcode[5] + opcode[2] + !opcode[1] + opcode[0];
+    op_jmp = !opcode[5] && !opcode[2] && opcode[1] && opcode[0];
+    op_beq = !opcode[5] && opcode[2] && !opcode[1] && !opcode[0];
+    op_bne = !opcode[5] && opcode[2] && !opcode[1] && opcode[0];
     op_ld_or_st = !opcode[5] && !opcode[2] && !opcode[1];
     op_ldr = opcode[0] && opcode[1] && opcode[2];
     op_ld_or_ldr_next = op_ld || op_ldr;
