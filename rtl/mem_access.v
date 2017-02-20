@@ -59,7 +59,7 @@ always_comb begin
 
     pc_next = pc_mem;
     y_next = y_mem;
-    mem_wr = !op_st_next;
+    mem_wr = op_st_next;
 
     mem_w_addr = y_mem;
     mem_w_data = d_mem;

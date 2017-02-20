@@ -148,7 +148,7 @@ execute execute0(
 mem_access mem_access0(
     .clk(clk),
     .ir_src_mem(`IR_SRC_DATA),
-    .mem_wr(d_mem_wr),
+    .mem_wr(d_mem_we),
     .mem_w_data(d_mem_w_data),
     .mem_w_addr(d_mem_w_addr),
     .op_ld_or_ldr(op_ld_or_ldr_exec),

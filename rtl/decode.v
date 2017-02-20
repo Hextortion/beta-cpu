@@ -133,12 +133,17 @@ always_comb begin
     rf_w_mux_jump_next = op_jmp || op_bne || op_beq;
 
     // mux for the next instruction register in the pipeline
-    case (ir_src_dec)
-        `IR_SRC_EXCEPT: ir_next = `INST_BNE_EXCEPT;
-        `IR_SRC_NOP: ir_next = `INST_NOP;
-        `IR_SRC_DATA: ir_next = ir_decode;
-        default: ir_next = 'x;
-    endcase
+    // case (ir_src_dec)
+    //     `IR_SRC_EXCEPT: ir_next = `INST_BNE_EXCEPT;
+    //     `IR_SRC_NOP: ir_next = `INST_NOP;
+    //     `IR_SRC_DATA: ir_next = ir_decode;
+    //     default: ir_next = 'x;
+    // endcase
+    if (stall) begin
+        ir_next = `INST_NOP;
+    end else begin
+        ir_next = ir_decode;
+    end
 
     pc_next = pc_decode;
 end
