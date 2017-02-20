@@ -39,6 +39,13 @@ add wave -decimal dut/y_mem
 add wave -decimal dut/rf_w_data
 add wave -divider -height 10
 add wave -decimal dut/decode0/rf/mem
+add wave -divider -height 10
+add wave -decimal dut/d_mem_we
+add wave -decimal dut/d_mem_r_data
+add wave -decimal dut/d_mem_w_data
+add wave -decimal dut/d_mem_w_addr
+add wave -divider -height 10
+add wave -decimal d_mem
 
 # add wave -divider -height 10
 # add wave dut/fetch0/*
@@ -53,4 +60,4 @@ add wave -decimal dut/decode0/rf/mem
 # add wave -divider -height 10
 # add wave dut/wb0/*
 
-run 20us
+run 1us

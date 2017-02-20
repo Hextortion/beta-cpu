@@ -45,6 +45,7 @@ core dut(
     .d_mem_oe(d_mem_oe)
 );
 
+// ddd the integers from 1 to 100 and store them in R0
 logic [31:0] test_1[6] = '{
     {`OPCODE_ADDC, 5'd0, 5'd31, 16'd0},
     {`OPCODE_ADDC, 5'd1, 5'd31, 16'd100},
@@ -65,14 +66,29 @@ logic [31:0] test_2[8] = '{
     {`OPCODE_ADD, 5'd31, 5'd31, 5'd31, 11'd0}
 };
 
+// at the end R4 = 1, R5 = -1
+logic [31:0] test_3[11] = '{
+    {`OPCODE_ADDC, 5'd0, 5'd0, 16'd1},
+    {`OPCODE_ADDC, 5'd1, 5'd1, 16'd2},
+    {`OPCODE_ADD, 5'd2, 5'd1, 5'd0, 11'd0},
+    {`OPCODE_ST, 5'd2, 5'd31, 16'd0},
+    {`OPCODE_ST, 5'd1, 5'd31, 16'd4},
+    {`OPCODE_ST, 5'd0, 5'd31, 16'd8},
+    {`OPCODE_LD, 5'd3, 5'd31, 16'd0},
+    {`OPCODE_SUBC, 5'd4, 5'd3, 16'd1},
+    {`OPCODE_LD, 5'd4, 5'd31, 16'd8},
+    {`OPCODE_SUBC, 5'd5, 5'd4, 16'd2},
+    {`OPCODE_BEQ, 5'd31, 5'd31, -16'd1}
+};
+
 initial begin
     for (integer i = 0; i < 1024; i++) begin
         i_mem[i] = 32'd0;
         d_mem[i] = 32'd0;
     end
 
-    for (integer i = 0; i < $size(test_1); i++) begin
-        i_mem[i] = test_1[i];
+    for (integer i = 0; i < $size(test_3); i++) begin
+        i_mem[i] = test_3[i];
     end
 
     rst = 0;
