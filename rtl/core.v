@@ -38,6 +38,7 @@ logic [31:0] pc_mem;
 
 logic [31:0] ir_fetch;
 logic [31:0] ir_decode;
+logic [31:0] ir_exec;
 logic [31:0] ir_mem;
 logic [31:0] ir_wb;
 
@@ -79,8 +80,8 @@ fetch fetch0(
     .op_bne(op_bne),
     .br_addr(br_addr),
     .j_addr(j_addr),
-    .i_mem_data(i_mem_data),
-    .i_mem_addr(i_mem_addr),
+    .i_mem_data(i_mem_r_data),
+    .i_mem_addr(i_mem_r_addr),
     .pc_next(pc_fetch),
     .ir_next(ir_fetch)
 );
@@ -109,9 +110,10 @@ decode decode0(
     .op_ld_or_ldr_exec(op_ld_or_ldr_exec),
     .op_ld_or_ldr_mem(op_ld_or_ldr_mem),
     .op_ld_or_ldr_wb(op_ld_or_ldr_wb),
-    .ir_exec(ir_exec),
-    .ir_mem(ir_mem),
-    .ir_wb(ir_wb),
+    .stall(stall),
+    .ir_exec(ir_exec[25:11]),
+    .ir_mem(ir_mem[25:11]),
+    .ir_wb(ir_wb[25:11]),
     .ex_bypass(y_exec),
     .mem_bypass(y_mem),
     .wb_bypass(rf_w_data),
@@ -123,14 +125,14 @@ decode decode0(
 execute execute0(
     .clk(clk),
     .ir_src_exec(`IR_SRC_DATA),
-    .op_st(op_st_decode),
-    .op_st_next(op_st_exec),
-    .rf_w_mux_jump(rf_w_mux_jump_decode),
-    .rf_w_mux_jump_next(rf_w_mux_jump_exec),
     .op_ld_or_st(op_ld_or_st),
     .op_ld_or_ldr(op_ld_or_ldr),
     .op_ldr(op_ldr),
     .op_ld_or_ldr_next(op_ld_or_ldr_exec),
+    .op_st(op_st_decode),
+    .op_st_next(op_st_exec),
+    .rf_w_mux_jump(rf_w_mux_jump_decode),
+    .rf_w_mux_jump_next(rf_w_mux_jump_exec),
     .pc(pc_decode),
     .ir(ir_decode),
     .a(a_decode),
@@ -138,6 +140,7 @@ execute execute0(
     .d(d_decode),
     .pc_next(pc_exec),
     .ir_next(ir_exec),
+    .y_next(y_exec),
     .d_next(d_exec)
 );
 
@@ -145,6 +148,8 @@ mem_access mem_access0(
     .clk(clk),
     .ir_src_mem(`IR_SRC_DATA),
     .mem_wr(d_mem_wr),
+    .mem_w_data(d_mem_w_data),
+    .mem_w_addr(d_mem_w_addr),
     .op_ld_or_ldr(op_ld_or_ldr_exec),
     .op_ld_or_ldr_next(op_ld_or_ldr_mem),
     .op_st(op_st_exec),
@@ -171,7 +176,8 @@ wb wb0(
     .y(y_mem),
     .mem_rd(d_mem_r_data),
     .rf_w_data(rf_w_data),
-    .rf_w_addr(rf_w_addr)
+    .rf_w_addr(rf_w_addr),
+    .rf_we(rf_we)
 );
 
 endmodule

@@ -39,6 +39,7 @@ module decode(
     input logic op_ld_or_ldr_exec,      // LD or LDR from exec stage
     input logic op_ld_or_ldr_mem,       // LD or LDR from mem access stage
     input logic op_ld_or_ldr_wb,        // LD or LDR from write back stage
+    output logic stall,                 // pipeline stall control signal
 
     // portions of instructions containing register numbers
     input logic [14:0] ir_exec,         // instruction in execute stage
@@ -70,7 +71,6 @@ logic op;
 logic opc;
 logic a_sel;
 logic b_sel;
-logic stall;
 
 logic ra2_sel;
 logic [4:0] ra1;
@@ -161,16 +161,17 @@ reg_file rf(
     .op_ld_or_ldr_exec(op_ld_or_ldr_exec),
     .op_ld_or_ldr_mem(op_ld_or_ldr_mem),
     .op_ld_or_ldr_wb(op_ld_or_ldr_wb),
+    .stall(stall),
 
     .ra1(ra1),
     .ra2(ra2),
     .rd1(rd1),
     .rd2(rd2),
     .we(rf_we),
-    .wa(ra_w_addr),
+    .wa(rf_w_addr),
     .wd(rf_w_data),
 
-    .exec_bypass(exec_bypass),
+    .exec_bypass(ex_bypass),
     .mem_bypass(mem_bypass),
     .wb_bypass(wb_bypass)
 );

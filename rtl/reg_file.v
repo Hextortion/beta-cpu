@@ -20,12 +20,12 @@ module reg_file(
     output logic stall,             // stall control signal
 
     // datapath signals
-    input logic [5:0] ra1,          // read address 1
-    input logic [5:0] ra2,          // read address 2
+    input logic [4:0] ra1,          // read address 1
+    input logic [4:0] ra2,          // read address 2
     output logic [31:0] rd1,        // read data 1
     output logic [31:0] rd2,        // read data 2    
     input logic we,                 // write enable
-    input logic [5:0] wa,           // write address
+    input logic [4:0] wa,           // write address
     input logic [31:0] wd,          // write data
     input logic [31:0] exec_bypass, // bypass from execute stage
     input logic [31:0] mem_bypass,  // bypass from memory access stage
