@@ -62,7 +62,7 @@ always_comb begin
     endcase
 end
 
-always_ff @(posedge clk) begin
+always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
         pc_fetch <= `PC_RESET_ADDR;
     end else begin

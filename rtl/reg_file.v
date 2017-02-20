@@ -9,10 +9,10 @@ module reg_file(
     input logic clk,                // clock
 
     // control signals
-    input logic [14:0] ir_decode    // instruction register in decode stage
-    input logic [14:0] ir_exec      // instruction register in execute stage
-    input logic [14:0] ir_mem       // instruction register in mem access stage
-    input logic [14:0] ir_wb        // instruction register in write back stage
+    input logic [14:0] ir_decode,   // instruction register in decode stage
+    input logic [14:0] ir_exec,     // instruction register in execute stage
+    input logic [14:0] ir_mem,      // instruction register in mem access stage
+    input logic [14:0] ir_wb,       // instruction register in write back stage
     input logic opcode_type_op,     // opcode is of class OP
     input logic op_ld_or_ldr_exec,  // opcode is LD or LDR in exec stage
     input logic op_ld_or_ldr_mem,   // opcode is LD or LDR in mem stage
@@ -37,12 +37,12 @@ logic [31:0] mem[0:31];
 logic [31:0] rd1_0;
 logic [31:0] rd2_0;
 
-logic ra_dec_eq_rc_ex,              // Ra in decode == Rc in exec
-logic ra_dec_eq_rc_mem,             // Ra in decode == Rc in memory access
-logic ra_dec_eq_rc_wb,              // Ra in decode == Rc in write back
-logic rb_dec_eq_rc_ex,              // Rb in decode == Rc in exec
-logic rb_dec_eq_rc_mem,             // Rb in decode == Rc in memory access
-logic rb_dec_eq_rc_wb,              // Rb in decode == Rc in write back
+logic ra_dec_eq_rc_ex;              // Ra in decode == Rc in exec
+logic ra_dec_eq_rc_mem;             // Ra in decode == Rc in memory access
+logic ra_dec_eq_rc_wb;              // Ra in decode == Rc in write back
+logic rb_dec_eq_rc_ex;              // Rb in decode == Rc in exec
+logic rb_dec_eq_rc_mem;             // Rb in decode == Rc in memory access
+logic rb_dec_eq_rc_wb;              // Rb in decode == Rc in write back
 
 always_comb begin
     rd1_0 = mem[ra1];
@@ -63,7 +63,9 @@ always_comb begin
             op_ld_or_ldr_mem && rb_dec_eq_rc_mem ||
             op_ld_or_ldr_wb && rb_dec_eq_rc_wb);
 
-    if (ra_dec_eq_rc_ex && !op_ld_or_ldr_exec) begin
+    if (ra1 == 5'd31) begin
+        rd1 = 32'd0;
+    end else if (ra_dec_eq_rc_ex && !op_ld_or_ldr_exec) begin
         rd1 = exec_bypass;
     end else if (ra_dec_eq_rc_mem && !op_ld_or_ldr_mem) begin
         rd1 = mem_bypass;
@@ -75,7 +77,9 @@ always_comb begin
         rd1 = rd1_0;
     end
 
-    if (rb_dec_eq_rc_ex && !op_ld_or_ldr_exec && opcode_type_op) begin
+    if (ra2 == 5'd31) begin
+        rd2 = 32'd0;
+    end else if (rb_dec_eq_rc_ex && !op_ld_or_ldr_exec && opcode_type_op) begin
         rd2 = exec_bypass;
     end else if (rb_dec_eq_rc_mem && !op_ld_or_ldr_mem && opcode_type_op) begin
         rd2 = mem_bypass;
@@ -93,4 +97,5 @@ always_ff @(posedge clk) begin
         mem[wa] <= wd;
     end
 end
+
 endmodule

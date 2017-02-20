@@ -15,7 +15,7 @@ module mem_access(
     output logic mem_wr,                    // memory write enable
     output logic [31:0] mem_w_data,         // memory write data
     output logic [31:0] mem_w_addr,         // memory write address
-    input logic op_st_ldr,                  // next op_st value for this stage
+    input logic op_st,                      // next op_st value for this stage
     output logic op_st_next,                // next op_st value for next stage
     input logic op_ld_or_ldr,               // next op_ld_or_ldr value for this stage
     output logic op_ld_or_ldr_next,         // next op_ld_or_ldr value for next stage
@@ -37,7 +37,6 @@ logic [31:0] pc_mem;
 logic [31:0] ir_mem;
 logic [31:0] y_mem;
 logic [31:0] d_mem;
-logic op_st;
 logic [5:0] opcode;
 
 always_ff @(posedge clk) begin
