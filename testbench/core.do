@@ -18,17 +18,39 @@ restart -f
 view wave
 add wave clk
 add wave rst
+add wave dut/stall
 add wave -divider -height 10
-add wave dut/fetch0/*
+add wave -hexadecimal dut/ir_fetch
+add wave -hexadecimal dut/ir_decode
+add wave -hexadecimal dut/ir_exec
+add wave -hexadecimal dut/ir_mem
+add wave -hexadecimal dut/ir_wb
 add wave -divider -height 10
-add wave dut/decode0/*
+add wave -hexadecimal dut/fetch0/pc_fetch
+add wave -hexadecimal dut/decode0/pc_decode
+add wave -hexadecimal dut/pc_decode
+add wave -hexadecimal dut/pc_exec
+add wave -hexadecimal dut/pc_mem
 add wave -divider -height 10
-add wave dut/decode0/rf/*
+add wave -decimal dut/a_decode
+add wave -decimal dut/b_decode
+add wave -decimal dut/y_exec
+add wave -decimal dut/y_mem
+add wave -decimal dut/rf_w_data
 add wave -divider -height 10
-add wave dut/execute0/*
-add wave -divider -height 10
-add wave dut/mem_access0/*
-add wave -divider -height 10
-add wave dut/wb0/*
+add wave -decimal dut/decode0/rf/mem
 
-run 1us
+# add wave -divider -height 10
+# add wave dut/fetch0/*
+# add wave -divider -height 10
+# add wave dut/decode0/*
+# add wave -divider -height 10
+# add wave dut/decode0/rf/*
+# add wave -divider -height 10
+# add wave dut/execute0/*
+# add wave -divider -height 10
+# add wave dut/mem_access0/*
+# add wave -divider -height 10
+# add wave dut/wb0/*
+
+run 20us

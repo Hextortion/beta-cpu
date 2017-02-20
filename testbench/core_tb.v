@@ -54,6 +54,17 @@ logic [31:0] test_1[6] = '{
     {`OPCODE_BEQ, 5'd31, 5'd31, -16'd1}
 };
 
+logic [31:0] test_2[8] = '{
+    {`OPCODE_ADDC, 5'd0, 5'd0, 16'd1},
+    {`OPCODE_ADDC, 5'd1, 5'd1, 16'd2},
+    {`OPCODE_OR, 5'd2, 5'd1, 5'd0, 11'd0},
+    {`OPCODE_ADD, 5'd31, 5'd31, 5'd31, 11'd0},
+    {`OPCODE_ADD, 5'd31, 5'd31, 5'd31, 11'd0},
+    {`OPCODE_ADD, 5'd31, 5'd31, 5'd31, 11'd0},
+    {`OPCODE_ADD, 5'd31, 5'd31, 5'd31, 11'd0},
+    {`OPCODE_ADD, 5'd31, 5'd31, 5'd31, 11'd0}
+};
+
 initial begin
     for (integer i = 0; i < 1024; i++) begin
         i_mem[i] = 32'd0;
@@ -78,13 +89,13 @@ initial begin
 end
 
 always_comb begin
-    i_mem_r_data = i_mem[i_mem_r_addr[9:0]];
-    d_mem_r_data = d_mem[d_mem_w_addr[9:0]];
+    i_mem_r_data = i_mem[i_mem_r_addr[11:2]];
+    d_mem_r_data = d_mem[d_mem_w_addr[11:2]];
 end
 
 always_ff @(posedge clk) begin
     if (d_mem_we) begin
-        d_mem[d_mem_w_addr[9:0]] <= d_mem_w_data;
+        d_mem[d_mem_w_addr[11:2]] <= d_mem_w_data;
     end
 end
 

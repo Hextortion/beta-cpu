@@ -90,7 +90,7 @@ always_comb begin
     j_addr = rd1;
 
     // set the branch address to PC_decode + 4 + 4 * SXT(C)
-    br_addr = pc_decode + 32'd4 + {{14{constant[15]}}, constant, 2'b00};
+    br_addr = pc_decode + {{14{constant[15]}}, constant, 2'b00};
 
     ///////////////////////////////////////////////////////////////////////////
     // Opcode Table (columns = opcode[2:0], rows = opcode[5:3])

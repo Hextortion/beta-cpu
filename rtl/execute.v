@@ -94,7 +94,7 @@ always_comb begin
                     default: fn[2:1] = 'x;
                 endcase
 
-                fn[3] = 1'bx;
+                fn[3] = 1'b0;
 
                 // need the ALU to compute A - B for CMP to work correctly
                 fn[0] = 1'b1;
@@ -108,7 +108,7 @@ always_comb begin
             ///////////////////////////////////////////////////////////////////
             2'b00: begin
                 fn[5:4] = `ALU_MUX_ARITH;
-                fn[3:1] = 3'bxxx;
+                fn[3:1] = 3'b000;
 
                 // last bit decides between add and subtract
                 fn[0] = opcode[0] ? 1'b1 : 1'b0;
@@ -151,7 +151,7 @@ always_comb begin
     end else begin
         if (op_ld_or_st_exec) begin
             fn[5:4] = `ALU_MUX_ARITH;
-            fn[3:1] = 3'bxxx;
+            fn[3:1] = 3'b000;
             fn[0] = 1'b0;
         end else if (op_ldr_exec) begin
             fn[5:4] = `ALU_MUX_BOOL;

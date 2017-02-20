@@ -175,6 +175,7 @@ wb wb0(
     .pc(pc_mem),
     .ir(ir_mem),
     .y(y_mem),
+    .ir_next(ir_wb),
     .mem_rd(d_mem_r_data),
     .rf_w_data(rf_w_data),
     .rf_w_addr(rf_w_addr),

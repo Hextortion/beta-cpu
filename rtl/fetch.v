@@ -53,13 +53,19 @@ always_comb begin
         default: pc_fetch_next = 'x;
     endcase
 
+    if (rst || op_jmp || op_beq || op_bne) begin
+        ir_next = `INST_NOP;
+    end else begin
+        ir_next = i_mem_data;
+    end
+
     // instruction register mux
-    case (ir_src_rf)
-        `IR_SRC_EXCEPT: ir_next = `INST_BNE_EXCEPT;
-        `IR_SRC_NOP: ir_next = `INST_NOP;
-        `IR_SRC_DATA: ir_next = i_mem_data;
-        default: ir_next = 'x;
-    endcase
+    // case (ir_src_rf)
+    //     `IR_SRC_EXCEPT: ir_next = `INST_BNE_EXCEPT;
+    //     `IR_SRC_NOP: ir_next = `INST_NOP;
+    //     `IR_SRC_DATA: ir_next = i_mem_data;
+    //     default: ir_next = 'x;
+    // endcase
 end
 
 always_ff @(posedge clk or posedge rst) begin

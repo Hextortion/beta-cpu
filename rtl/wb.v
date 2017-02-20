@@ -21,6 +21,7 @@ module wb(
     input logic [31:0] ir,                  // next ir value for this stage
     input logic [31:0] y,                   // next y value for this stage
     input logic [31:0] mem_rd,              // output of memory read
+    output logic [31:0] ir_next,            // next ir value for next stage
 
     output logic [31:0] rf_w_data,          // reg file write data
     output logic [4:0] rf_w_addr,           // reg file write address
@@ -57,6 +58,8 @@ always_comb begin
         5'b001: rf_w_data = pc_wb;
         default: rf_w_data = 'x;
     endcase
+
+    ir_next = ir_wb;
 end
 
 endmodule
