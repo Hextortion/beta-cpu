@@ -16,7 +16,6 @@ module fetch(
     input logic stall,                  // pipeline stall
     input logic zr,                     // zero
     input logic irq,                    // interrupt line
-    input logic [1:0] ir_src_rf,        // instruction register source
     input logic ill_op,                 // illegal operation control signal
     input logic op_jmp,                 // JMP control signal
     input logic op_beq,                 // BEQ control signal
@@ -37,6 +36,10 @@ logic [31:0] pc_fetch;
 logic [31:0] pc_fetch_next;
 logic [31:0] pc_plus_four;
 
+logic branch_taken;
+logic current_exception;
+logic preceding_exception;
+
 always_comb begin
     pc_plus_four = pc_fetch + 32'd4;
     pc_next = pc_plus_four;
@@ -53,19 +56,20 @@ always_comb begin
         default: pc_fetch_next = 'x;
     endcase
 
-    if (rst || op_jmp || op_beq || op_bne) begin
+    branch_taken = op_jmp || (op_beq && zr) || (op_bne && !zr);
+    preceding_exception = 1'b0;
+    current_exception = 1'b0;
+
+    if (!preceding_exception && !current_exception &&
+        !irq && branch_taken || preceding_exception) begin
         ir_next = `INST_NOP;
     end else begin
-        ir_next = i_mem_data;
+        if (current_exception) begin
+            ir_next = `INST_BNE_EXCEPT;
+        end else begin
+            ir_next = i_mem_data;
+        end
     end
-
-    // instruction register mux
-    // case (ir_src_rf)
-    //     `IR_SRC_EXCEPT: ir_next = `INST_BNE_EXCEPT;
-    //     `IR_SRC_NOP: ir_next = `INST_NOP;
-    //     `IR_SRC_DATA: ir_next = i_mem_data;
-    //     default: ir_next = 'x;
-    // endcase
 end
 
 always_ff @(posedge clk or posedge rst) begin

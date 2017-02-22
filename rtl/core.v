@@ -73,7 +73,6 @@ fetch fetch0(
     .stall(stall),
     .zr(zr),
     .irq(1'b0),
-    .ir_src_rf(`IR_SRC_DATA),
     .ill_op(1'b0),
     .op_jmp(op_jmp),
     .op_beq(op_beq),
