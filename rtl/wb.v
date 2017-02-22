@@ -31,6 +31,7 @@ module wb(
 logic [31:0] pc_wb;
 logic [31:0] ir_wb;
 logic [31:0] y_wb;
+logic [31:0] mem_rd_wb;
 
 logic rf_w_mux_jump_wb;
 logic op_st_wb;
@@ -41,6 +42,7 @@ always_ff @(posedge clk) begin
     pc_wb <= pc;
     ir_wb <= ir;
     y_wb <= y;
+    mem_rd_wb <= mem_rd;
     op_ld_or_ldr_next <= op_ld_or_ldr;
     op_st_wb <= op_st;
     rf_w_mux_jump_wb <= rf_w_mux_jump;
@@ -53,7 +55,7 @@ always_comb begin
 
     // instruction register mux
     case ({opcode[5], op_ld_or_ldr_next, rf_w_mux_jump_wb}) inside
-        5'b010: rf_w_data = mem_rd;
+        5'b010: rf_w_data = mem_rd_wb;
         5'b100: rf_w_data = y_wb;
         5'b001: rf_w_data = pc_wb;
         default: rf_w_data = 'x;
