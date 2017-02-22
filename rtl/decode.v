@@ -148,8 +148,10 @@ always_comb begin
     pc_next = pc_decode;
 end
 
-always_ff @(posedge clk) begin
-    if (~stall) begin
+always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+        ir_decode <= `INST_NOP;
+    end else if (~stall) begin
         ir_decode <= ir;
         pc_decode <= pc;
     end
