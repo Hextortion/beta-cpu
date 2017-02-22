@@ -149,8 +149,8 @@ always_comb begin
 end
 
 always_ff @(posedge clk) begin
-    ir_decode <= ir;
     if (~stall) begin
+        ir_decode <= ir;
         pc_decode <= pc;
     end
 end
