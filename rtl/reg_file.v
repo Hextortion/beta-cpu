@@ -19,6 +19,7 @@ module reg_file(
     input logic op_ld_or_ldr_exec,  // opcode is LD or LDR in exec stage
     input logic op_ld_or_ldr_mem,   // opcode is LD or LDR in mem stage
     input logic op_ld_or_ldr_wb,    // opcode is LD or LDR in wb stage
+    input logic op_st,              // opcode is ST
     output logic stall,             // stall control signal
 
     // datapath signals
@@ -39,6 +40,7 @@ logic [31:0] mem[0:31];
 logic [31:0] rd1_0;
 logic [31:0] rd2_0;
 
+logic check_ra2_hazard;             // Check Rb hazard if ST or opcode type op
 logic ra_dec_eq_rc_ex;              // Ra in decode == Rc in exec
 logic ra_dec_eq_rc_mem;             // Ra in decode == Rc in memory access
 logic ra_dec_eq_rc_wb;              // Ra in decode == Rc in write back
@@ -58,12 +60,16 @@ always_comb begin
     rd1_0 = mem[ra1];
     rd2_0 = mem[ra2];
 
-    ra_dec_eq_rc_ex = ir_decode[9:5] == ir_exec[14:10];
-    ra_dec_eq_rc_mem = ir_decode[9:5] == ir_mem[14:10];
-    ra_dec_eq_rc_wb = ir_decode[9:5] == ir_wb[14:10];
-    rb_dec_eq_rc_ex = ir_decode[4:0] == ir_exec[14:10];
-    rb_dec_eq_rc_mem = ir_decode[4:0] == ir_mem[14:10];
-    rb_dec_eq_rc_wb = ir_decode[4:0] == ir_wb[14:10];
+    // if we have an ST instruction, then the RA2 input into the register
+    // file is actually Rc
+    check_ra2_hazard = opcode_type_op || op_st;
+
+    ra_dec_eq_rc_ex = ra1 == ir_exec[14:10];
+    ra_dec_eq_rc_mem = ra1 == ir_mem[14:10];
+    ra_dec_eq_rc_wb = ra1 == ir_wb[14:10];
+    rb_dec_eq_rc_ex = ra2 == ir_exec[14:10];
+    rb_dec_eq_rc_mem = ra2 == ir_mem[14:10];
+    rb_dec_eq_rc_wb = ra2 == ir_wb[14:10];
 
     if (rst) begin
         stall = 1'b0;
@@ -71,7 +77,7 @@ always_comb begin
         stall = op_ld_or_ldr_exec && ra_dec_eq_rc_ex ||
                 op_ld_or_ldr_mem && ra_dec_eq_rc_mem ||
                 op_ld_or_ldr_wb && ra_dec_eq_rc_wb ||
-                opcode_type_op && (
+                (check_ra2_hazard) && (
                 op_ld_or_ldr_exec && rb_dec_eq_rc_ex ||
                 op_ld_or_ldr_mem && rb_dec_eq_rc_mem ||
                 op_ld_or_ldr_wb && rb_dec_eq_rc_wb);
@@ -93,11 +99,11 @@ always_comb begin
 
     if (ra2 == 5'd31) begin
         rd2 = 32'd0;
-    end else if (rb_dec_eq_rc_ex && !op_ld_or_ldr_exec && opcode_type_op) begin
+    end else if (rb_dec_eq_rc_ex && !op_ld_or_ldr_exec && check_ra2_hazard) begin
         rd2 = exec_bypass;
-    end else if (rb_dec_eq_rc_mem && !op_ld_or_ldr_mem && opcode_type_op) begin
+    end else if (rb_dec_eq_rc_mem && !op_ld_or_ldr_mem && check_ra2_hazard) begin
         rd2 = mem_bypass;
-    end else if (rb_dec_eq_rc_wb && !op_ld_or_ldr_wb && opcode_type_op) begin
+    end else if (rb_dec_eq_rc_wb && !op_ld_or_ldr_wb && check_ra2_hazard) begin
         rd2 = wb_bypass;
     end else if (we && wa == ra2) begin
         rd2 = wd;

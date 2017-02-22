@@ -168,6 +168,7 @@ reg_file rf(
     .op_ld_or_ldr_exec(op_ld_or_ldr_exec),
     .op_ld_or_ldr_mem(op_ld_or_ldr_mem),
     .op_ld_or_ldr_wb(op_ld_or_ldr_wb),
+    .op_st(op_st_next),
     .stall(stall),
 
     .ra1(ra1),
