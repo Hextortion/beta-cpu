@@ -46,20 +46,27 @@ always_comb begin
     i_mem_addr = pc_fetch;
 
     // next program counter mux
-    case ({irq, ill_op, op_jmp, op_beq, op_bne}) inside
-        5'b1xxxx: pc_fetch_next = `PC_EXCEPT_ADDR;
-        5'b01xxx: pc_fetch_next = `PC_ILLOP_ADDR;
-        5'b00100: pc_fetch_next = j_addr;
-        5'b00010: pc_fetch_next = zr ? br_addr : pc_plus_four;
-        5'b00001: pc_fetch_next = zr ? pc_plus_four : br_addr;
-        5'b00000: pc_fetch_next = pc_plus_four;
-        default: pc_fetch_next = 'x;
-    endcase
+    if (irq || ill_op || preceding_exception || current_exception) begin
+        if (ill_op) begin
+            pc_fetch_next = `PC_ILLOP_ADDR;
+        end else begin
+            pc_fetch_next = `PC_EXCEPT_ADDR;
+        end
+    end else begin
+        case ({op_jmp, op_beq, op_bne})
+            3'b100: pc_fetch_next = j_addr;
+            3'b010: pc_fetch_next = zr ? br_addr : pc_plus_four;
+            3'b001: pc_fetch_next = zr ? pc_plus_four : br_addr;
+            3'b000: pc_fetch_next = pc_plus_four;
+            default: pc_fetch_next = 'x;
+        endcase
+    end
 
     branch_taken = op_jmp || (op_beq && zr) || (op_bne && !zr);
     preceding_exception = 1'b0;
     current_exception = 1'b0;
 
+    // next instruction mux
     if (!preceding_exception && !current_exception &&
         !irq && branch_taken || preceding_exception) begin
         ir_next = `INST_NOP;
