@@ -147,7 +147,7 @@ always_comb begin
     a_next = op_ldr ? br_addr : rd1_bypass_out;
 
     // B = BSEL ? SXT(C) : RD2
-    b_sel = op_ld || op_no_lit || op_st;
+    b_sel = op_ld || op_lit || op_st;
     b_next = b_sel ? {{16{literal[15]}}, literal} : rd2_bypass_out;
 
     d_next = rd2_bypass_out;

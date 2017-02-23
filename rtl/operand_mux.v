@@ -36,6 +36,8 @@ logic ra_wb_bypass;
 logic ra_reg_file;
 logic ra_zr;
 
+logic [4:0] operand_sel;
+
 always_comb begin
     ra_eq_rc_wb = rc_wb == ra;
     ra_eq_rc_mem = rc_mem == ra;
@@ -47,15 +49,15 @@ always_comb begin
     ra_wb_bypass = !ra_zr && !ra_eq_rc_ex && !ra_eq_rc_mem && ra_eq_rc_wb;
     ra_reg_file = !ra_zr && !ra_eq_rc_ex && !ra_eq_rc_mem && !ra_eq_rc_wb;
 
-    case ({ra_reg_file, ra_wb_bypass, ra_mem_bypass, op_br_or_jmp_mem,
-           ra_ex_bypass, op_br_or_jmp_ex, ra_zr})
-        7'b1000000: rd_out = rd_in;
-        7'b0100000: rd_out = wb_bypass;
-        7'b0010000: rd_out = mem_y_bypass;
-        7'b0011000: rd_out = mem_pc_bypass;
-        7'b0000100: rd_out = ex_y_bypass;
-        7'b0000110: rd_out = ex_pc_bypass;
-        7'b0000001: rd_out = 32'd0;
+    operand_sel = {ra_reg_file, ra_wb_bypass, ra_mem_bypass, 
+                   ra_ex_bypass, ra_zr};
+
+    case (operand_sel)
+        5'b10000: rd_out = rd_in;
+        5'b01000: rd_out = wb_bypass;
+        5'b00100: rd_out = op_br_or_jmp_mem ? mem_pc_bypass : mem_y_bypass;
+        5'b00010: rd_out = op_br_or_jmp_ex ? ex_pc_bypass : ex_y_bypass;
+        5'b00001: rd_out = 32'd0;
         default: rd_out = 'x;
     endcase
 end
