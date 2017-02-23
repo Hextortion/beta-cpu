@@ -16,7 +16,7 @@ module fetch(
     input logic stall,                  // pipeline stall
     input logic zr,                     // zero
     input logic irq,                    // interrupt line
-    input logic ill_op,                 // illegal operation control signal
+    input logic op_ill,                 // illegal operation control signal
     input logic op_jmp,                 // JMP control signal
     input logic op_beq,                 // BEQ control signal
     input logic op_bne,                 // BNE control signal
@@ -44,10 +44,12 @@ always_comb begin
     pc_plus_four = pc_fetch + 32'd4;
     pc_next = pc_plus_four;
     i_mem_addr = pc_fetch;
+    preceding_exception = 1'b0;
+    current_exception = 1'b0;
 
     // next program counter mux
-    if (irq || ill_op || preceding_exception || current_exception) begin
-        if (ill_op) begin
+    if (irq || op_ill || preceding_exception || current_exception) begin
+        if (op_ill) begin
             pc_fetch_next = `PC_ILLOP_ADDR;
         end else begin
             pc_fetch_next = `PC_EXCEPT_ADDR;
@@ -63,9 +65,6 @@ always_comb begin
     end
 
     branch_taken = op_jmp || (op_beq && zr) || (op_bne && !zr);
-    preceding_exception = 1'b0;
-    current_exception = 1'b0;
-
     // next instruction mux
     if (!preceding_exception && !current_exception &&
         !irq && branch_taken || preceding_exception) begin

@@ -24,12 +24,11 @@ module operand_mux(
     input logic op_br_or_jmp_ex,            // instruction is BEQ, BNE, or JMP in execute stage
     input logic op_br_or_jmp_mem,           // instruction is BEQ, BNE, or JMP in memory access stage
 
-    output logic [31:0] rd_out              // output of the rd mux
+    output logic [31:0] rd_out,             // output of the rd mux
+    output logic ra_eq_rc_wb,               // Ra = Rc_WB
+    output logic ra_eq_rc_mem,              // Ra = Rc_MEM
+    output logic ra_eq_rc_ex                // Ra = Rc_EX
 );
-
-logic ra_eq_rc_wb;
-logic ra_eq_rc_mem;
-logic ra_eq_rc_ex;
 
 logic ra_ex_bypass;
 logic ra_mem_bypass;

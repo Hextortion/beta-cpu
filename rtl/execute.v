@@ -10,16 +10,9 @@
 module execute(
     input logic clk,                        // clock
 
-    // control signals
-    input logic [1:0] ir_src_exec,          // instruction register source
-    input logic op_ld_or_st,                // next op_ld_or_st value for this stage
-    input logic op_ld_or_ldr,               // next op_ld_or_ldr value for this stage
-    input logic op_ldr,                     // next ldr value for this stage
-    output logic op_ld_or_ldr_next,         // next op_ld_or_ldr value for next stage
-    input logic op_st,                      // next op_st value for this stage
-    output logic op_st_next,                // next op_st value for next stage
-    input logic rf_w_mux_jump,              // next rf_w_mux_jump value for this stage
-    output logic rf_w_mux_jump_next,        // next rf_w_mux_jump value for next stage
+    output logic op_ld_or_ldr,              // this IR is LD or LDR
+    output logic op_st,                     // this IR is ST
+    output logic op_br_or_jmp,              // this IR is BR or JMP
 
     // datapath signals
     input logic [31:0] pc,                  // next pc value for this stage
@@ -41,11 +34,17 @@ logic [31:0] a_exec;
 logic [31:0] b_exec;
 logic [31:0] d_exec;
 
-logic op_ld_or_st_exec;
-logic op_ldr_exec;
-
+logic op_ld_or_st;
+logic op_ldr;
+logic op_ld;
+logic op_jmp;
+logic op_beq;
+logic op_bne;
 logic [5:0] opcode;
 logic [5:0] fn;
+
+logic preceding_exception;
+logic current_exception;
 
 always_ff @(posedge clk) begin
     pc_exec <= pc;
@@ -53,16 +52,9 @@ always_ff @(posedge clk) begin
     a_exec <= a;
     b_exec <= b;
     d_exec <= d;
-    op_ld_or_st_exec <= op_ld_or_st;
-    op_ldr_exec <= op_ldr;
-    op_ld_or_ldr_next <= op_ld_or_ldr;
-    op_st_next <= op_st;
-    rf_w_mux_jump_next <= rf_w_mux_jump;
 end
 
 always_comb begin
-    opcode = ir_exec[31:26];
-
     // Opcode Table (columns = opcode[2:0], rows = opcode[5:3])
     //     | 000  | 001  | 010  | 011   | 100    | 101    | 110    | 111 |
     // 000 |      |      |      |       |        |        |        |     |
@@ -73,6 +65,16 @@ always_comb begin
     // 101 | AND  | OR   | XOR  | XNOR  | SHL    | SHR    | SRA    |     |
     // 110 | ADDC | SUBC |      |       | CMPEQC | CMPLTC | CMPLEC |     |
     // 111 | ANDC | ORC  | XORC | XNORC | SHLC   | SHRC   | SRAC   |     |
+    opcode = ir_exec[31:26];
+    op_st = !opcode[5] && !opcode[2] && !opcode[1] && opcode[0];
+    op_ld = !opcode[5] && !opcode[2] && !opcode[1] && !opcode[0];
+    op_jmp = !opcode[5] && !opcode[2] && opcode[1] && opcode[0];
+    op_beq = !opcode[5] && opcode[2] && !opcode[1] && !opcode[0];
+    op_bne = !opcode[5] && opcode[2] && !opcode[1] && opcode[0];
+    op_br_or_jmp = op_jmp | op_bne | op_beq;
+    op_ld_or_st = !opcode[5] && !opcode[2] && !opcode[1];
+    op_ldr = opcode[0] && opcode[1] && opcode[2];
+    op_ld_or_ldr = op_ldr || op_ld;
 
     // generating the correct fn bits for the ALU
     if (opcode[5]) begin
@@ -149,11 +151,11 @@ always_comb begin
             end
         endcase
     end else begin
-        if (op_ld_or_st_exec) begin
+        if (op_ld_or_st) begin
             fn[5:4] = `ALU_MUX_ARITH;
             fn[3:1] = 3'b000;
             fn[0] = 1'b0;
-        end else if (op_ldr_exec) begin
+        end else if (op_ldr) begin
             fn[5:4] = `ALU_MUX_BOOL;
             fn[3:0] = 4'b1010;
         end else begin
@@ -161,13 +163,18 @@ always_comb begin
         end
     end
 
-    // mux for the next instruction register in the pipeline
-    case (ir_src_exec)
-        `IR_SRC_EXCEPT: ir_next = `INST_BNE_EXCEPT;
-        `IR_SRC_NOP: ir_next = `INST_NOP;
-        `IR_SRC_DATA: ir_next = ir_exec;
-        default: ir_next = 'x;
-    endcase
+    preceding_exception = 1'b0;
+    current_exception = 1'b0;
+
+    if (preceding_exception) begin
+        ir_next = `INST_NOP;
+    end else begin
+        if (current_exception) begin
+            ir_next = `INST_BNE_EXCEPT;
+        end else begin
+            ir_next = ir_exec;
+        end
+    end
 
     pc_next = pc_exec;
     d_next = d_exec;

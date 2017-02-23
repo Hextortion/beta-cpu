@@ -18,7 +18,7 @@ module core(
     output logic [31:0] d_mem_w_data,   // data memory write data
     output logic [31:0] d_mem_w_addr,   // data memory write address
     input logic [31:0] d_mem_r_data,    // data memory read data
-    output logic [31:0] d_mem_we,       // data memory write enable
+    output logic d_mem_we,              // data memory write enable
     output logic [31:0] d_mem_oe        // data memory output enable
 );
 
@@ -27,6 +27,7 @@ logic zr;
 logic op_jmp;
 logic op_beq;
 logic op_bne;
+logic op_ill;
 
 logic [31:0] br_addr;
 logic [31:0] j_addr;
@@ -54,18 +55,15 @@ logic [4:0] rf_w_addr;
 logic [31:0] rf_w_data;
 logic rf_we;
 
-logic op_st_decode;
-logic op_st_exec;
+logic op_st_ex;
 logic op_st_mem;
+logic op_st_wb;
 
-logic op_ld_or_ldr_decode;
-logic op_ld_or_ldr_exec;
+logic op_ld_or_ldr_ex;
 logic op_ld_or_ldr_mem;
-logic op_ld_or_ldr_wb;
 
-logic rf_w_mux_jump_decode;
-logic rf_w_mux_jump_exec;
-logic rf_w_mux_jump_mem;
+logic op_br_or_jmp_ex;
+logic op_br_or_jmp_mem;
 
 fetch fetch0(
     .clk(clk),
@@ -73,7 +71,7 @@ fetch fetch0(
     .stall(stall),
     .zr(zr),
     .irq(1'b0),
-    .ill_op(1'b0),
+    .op_ill(1'b0),
     .op_jmp(op_jmp),
     .op_beq(op_beq),
     .op_bne(op_bne),
@@ -90,32 +88,33 @@ decode decode0(
     .rst(rst),
     .pc(pc_fetch),
     .ir(ir_fetch),
-    .j_addr(j_addr),
-    .br_addr(br_addr),
     .d_next(d_decode),
     .a_next(a_decode),
     .b_next(b_decode),
     .pc_next(pc_decode),
     .ir_next(ir_decode),
-    .op_ld_or_st(op_ld_or_st),
-    .op_ldr(op_ldr),
+    .op_ill(op_ill),
     .op_jmp(op_jmp),
     .op_beq(op_beq),
     .op_bne(op_bne),
-    .ir_src_dec(`IR_SRC_DATA),
     .zr(zr),
-    .op_ld_or_ldr_next(op_ld_or_ldr_decode),
-    .op_st_next(op_st_decode),
-    .rf_w_mux_jump_next(rf_w_mux_jump_decode),
-    .op_ld_or_ldr_exec(op_ld_or_ldr_exec),
-    .op_ld_or_ldr_mem(op_ld_or_ldr_mem),
-    .op_ld_or_ldr_wb(op_ld_or_ldr_wb),
+    .j_addr(j_addr),
+    .br_addr(br_addr),
     .stall(stall),
-    .ir_exec(ir_exec[25:11]),
-    .ir_mem(ir_mem[25:11]),
-    .ir_wb(ir_wb[25:11]),
-    .ex_bypass(y_exec),
-    .mem_bypass(y_mem),
+    .op_ld_or_ldr_ex(op_ld_or_ldr_ex),
+    .op_ld_or_ldr_mem(op_ld_or_ldr_mem),
+    .op_br_or_jmp_ex(op_br_or_jmp_ex),
+    .op_br_or_jmp_mem(op_br_or_jmp_mem),
+    .op_st_ex(op_st_ex),
+    .op_st_mem(op_st_mem),
+    .op_st_wb(op_st_wb),
+    .rc_ex(ir_exec[25:21]),
+    .rc_mem(ir_mem[25:21]),
+    .rc_wb(ir_wb[25:21]),
+    .ex_y_bypass(y_exec),
+    .ex_pc_bypass(pc_exec),
+    .mem_y_bypass(y_mem),
+    .mem_pc_bypass(pc_mem),
     .wb_bypass(rf_w_data),
     .rf_w_addr(rf_w_addr),
     .rf_w_data(rf_w_data),
@@ -124,15 +123,9 @@ decode decode0(
 
 execute execute0(
     .clk(clk),
-    .ir_src_exec(`IR_SRC_DATA),
-    .op_ld_or_st(op_ld_or_st),
-    .op_ld_or_ldr(op_ld_or_ldr_decode),
-    .op_ldr(op_ldr),
-    .op_ld_or_ldr_next(op_ld_or_ldr_exec),
-    .op_st(op_st_decode),
-    .op_st_next(op_st_exec),
-    .rf_w_mux_jump(rf_w_mux_jump_decode),
-    .rf_w_mux_jump_next(rf_w_mux_jump_exec),
+    .op_ld_or_ldr(op_ld_or_ldr_ex),
+    .op_st(op_st_ex),
+    .op_br_or_jmp(op_br_or_jmp_ex),
     .pc(pc_decode),
     .ir(ir_decode),
     .a(a_decode),
@@ -146,31 +139,24 @@ execute execute0(
 
 mem_access mem_access0(
     .clk(clk),
-    .ir_src_mem(`IR_SRC_DATA),
-    .mem_wr(d_mem_we),
-    .mem_w_data(d_mem_w_data),
-    .mem_w_addr(d_mem_w_addr),
-    .op_ld_or_ldr(op_ld_or_ldr_exec),
-    .op_ld_or_ldr_next(op_ld_or_ldr_mem),
-    .op_st(op_st_exec),
-    .op_st_next(op_st_mem),
-    .rf_w_mux_jump(rf_w_mux_jump_exec),
-    .rf_w_mux_jump_next(rf_w_mux_jump_mem),
+    .op_ld_or_ldr(op_ld_or_ldr_mem),
+    .op_st(op_st_mem),
+    .op_br_or_jmp(op_br_or_jmp_mem),
     .pc(pc_exec),
     .ir(ir_exec),
     .y(y_exec),
     .d(d_exec),
     .pc_next(pc_mem),
     .ir_next(ir_mem),
-    .y_next(y_mem)
+    .y_next(y_mem),
+    .mem_wr(d_mem_we),
+    .mem_w_data(d_mem_w_data),
+    .mem_w_addr(d_mem_w_addr)
 );
 
 wb wb0(
     .clk(clk),
-    .op_ld_or_ldr(op_ld_or_ldr_mem),
-    .op_ld_or_ldr_next(op_ld_or_ldr_wb),
-    .op_st(op_st_mem),
-    .rf_w_mux_jump(rf_w_mux_jump_mem),
+    .op_st(op_st_wb),
     .pc(pc_mem),
     .ir(ir_mem),
     .y(y_mem),

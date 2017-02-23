@@ -87,8 +87,8 @@ initial begin
         d_mem[i] = 32'd0;
     end
 
-    for (integer i = 0; i < $size(test_3); i++) begin
-        i_mem[i] = test_3[i];
+    for (integer i = 0; i < $size(test_1); i++) begin
+        i_mem[i] = test_1[i];
     end
 
     rst = 0;
