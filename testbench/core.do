@@ -27,7 +27,9 @@ add wave -hexadecimal dut/execute0/ir_exec
 add wave -hexadecimal dut/mem_access0/ir_mem
 add wave -hexadecimal dut/wb0/ir_wb
 add wave -divider -height 20
+add wave dut/decode0/operand_mux0/operand_sel
 add wave -decimal dut/a_decode
+add wave dut/decode0/operand_mux1/operand_sel
 add wave -decimal dut/b_decode
 add wave -decimal dut/y_exec
 add wave -decimal dut/y_mem
@@ -48,6 +50,8 @@ add wave d_mem
 # add wave dut/decode0/*
 # add wave -divider -height 10
 # add wave dut/decode0/rf/*
+# add wave dut/decode0/operand_mux0/*
+# add wave dut/decode0/operand_mux1/*
 # add wave -divider -height 10
 # add wave dut/execute0/*
 # add wave -divider -height 10
@@ -55,4 +59,4 @@ add wave d_mem
 # add wave -divider -height 10
 # add wave dut/wb0/*
 
-run 15us
+run 1us

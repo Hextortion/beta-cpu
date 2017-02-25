@@ -19,7 +19,7 @@ module core(
     output logic [31:0] d_mem_w_addr,   // data memory write address
     input logic [31:0] d_mem_r_data,    // data memory read data
     output logic d_mem_we,              // data memory write enable
-    output logic [31:0] d_mem_oe        // data memory output enable
+    output logic d_mem_oe               // data memory output enable
 );
 
 logic stall;
