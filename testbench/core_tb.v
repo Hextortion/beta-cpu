@@ -12,14 +12,33 @@
 
 module core_tb;
 
-logic clk = 1'b0;
+logic clk;
 logic rst;
-int cycles = 0;
 
-always begin
-    #10 clk = ~clk;
-    cycles++;
+//
+// clock generation
+//
+initial begin
+    clk <= 1'b0;
+    forever begin
+        #10 clk = ~clk;
+    end
 end
+
+//
+// reset generation
+//
+task reset();
+    rst = 1;
+    wait_cycles(6);
+    rst = 0;
+endtask
+
+task wait_cycles(input [31:0] cycles);
+    begin
+        # (20 * cycles);
+    end
+endtask
 
 parameter MEM_SIZE = 1024;
 
@@ -73,21 +92,6 @@ function void clear_mem;
     end
 endfunction
 
-task reset();
-    rst = 0;
-    @(posedge clk);
-    rst = 1;
-    @(posedge clk);
-    @(posedge clk);
-    @(posedge clk);
-    @(posedge clk);
-    @(posedge clk);
-    @(posedge clk);
-    @(posedge clk);
-    rst = 0;
-    cycles = 0;
-endtask
-
 initial begin
     process_file();
 end
@@ -96,7 +100,7 @@ task process_file;
     logic [31:0] expected_rf [32];
     string str;
     int count;
-    int wait_cycles;
+    int cycles;
     int num_inst;
     int num_fail;
     int test_number;
@@ -115,7 +119,7 @@ task process_file;
             $display("Test %d", test_number);
             count = $fscanf(testfile, "%s", str);
             if (str == "WAIT") begin
-                count = $fscanf(testfile, "%d", wait_cycles);
+                count = $fscanf(testfile, "%d", cycles);
             end
 
             count = $fscanf(testfile, "%s", str);
@@ -138,7 +142,7 @@ task process_file;
                 end
             end
             reset();
-            wait (cycles == wait_cycles);
+            wait_cycles(cycles);
 
             for (int i = 0; i < 32; i++) begin
                 if (dut.decode0.rf.mem[i] != expected_rf[i]) begin
