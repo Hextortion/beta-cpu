@@ -206,7 +206,7 @@ reg_file rf(
 
 operand_mux operand_mux0(
     .ra(ra1),
-    .rd_in(rd1_bypass_out),
+    .rd_in(rd1_rf_out),
     .ex_y_bypass(ex_y_bypass),
     .ex_pc_bypass(ex_pc_bypass),
     .mem_y_bypass(mem_y_bypass),
