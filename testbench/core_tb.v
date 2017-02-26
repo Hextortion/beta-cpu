@@ -63,44 +63,10 @@ initial begin
     end
 end
 
-// add the integers from 1 to 100 and store them in R0
-logic [31:0] test1[] = '{
-    {`OPCODE_ADDC, 5'd0, 5'd31, 16'd0},
-    {`OPCODE_ADDC, 5'd1, 5'd31, 16'd100},
-    {`OPCODE_ADD, 5'd0, 5'd1, 5'd0, 11'd0},
-    {`OPCODE_SUBC, 5'd1, 5'd1, 16'd1},
-    {`OPCODE_BNE, 5'd31, 5'd1, -16'd3},
-    {`OPCODE_BEQ, 5'd31, 5'd31, -16'd1}
-};
-
-// at the end R1 = 1, R2 = 2, R3 = 3, R4 = 1, R5 = -1
-logic [31:0] test2[] = '{
-    {`OPCODE_ADDC, 5'd0, 5'd0, 16'd1},
-    {`OPCODE_ADDC, 5'd1, 5'd1, 16'd2},
-    {`OPCODE_ADD, 5'd2, 5'd1, 5'd0, 11'd0},
-    {`OPCODE_ST, 5'd2, 5'd31, 16'd0},
-    {`OPCODE_ST, 5'd1, 5'd31, 16'd4},
-    {`OPCODE_ST, 5'd0, 5'd31, 16'd8},
-    {`OPCODE_LD, 5'd3, 5'd31, 16'd0},
-    {`OPCODE_SUBC, 5'd4, 5'd3, 16'd1},
-    {`OPCODE_LD, 5'd4, 5'd31, 16'd8},
-    {`OPCODE_SUBC, 5'd5, 5'd4, 16'd2},
-    {`OPCODE_BEQ, 5'd31, 5'd31, -16'd1}
-};
-
-task run_test(
-    logic [31:0] test[], 
-    int num_cycles
-);
-    clear_mem();
-    for (int i = 0; i < $size(test); i++) begin
-        i_mem[i] = test[i];
-    end
-    reset();
-    wait (cycles == num_cycles);
-endtask
-
 function void clear_mem;
+    for (int i = 0; i < 32 - 1; i++) begin
+        dut.decode0.rf.mem[i] = 32'd0;
+    end
     for (int i = 0; i < MEM_SIZE - 1; i++) begin
         i_mem[i] = 32'd0;
         d_mem[i] = 32'd0;
@@ -123,8 +89,77 @@ task reset();
 endtask
 
 initial begin
-    run_test(test1, 100000);
-    $finish;
+    process_file();
 end
+
+task process_file;
+    logic [31:0] expected_rf [32];
+    string str;
+    int count;
+    int wait_cycles;
+    int num_inst;
+    int num_fail;
+    int test_number;
+    logic test_fail;
+
+    int testfile = $fopen("testbench/testcases.txt", "r");
+    if (!testfile) begin
+        $stop;
+    end
+
+    while (!$feof(testfile)) begin
+        count = $fscanf(testfile, "%s", str);
+        if (str == "TEST") begin
+            test_fail = 1'b0;
+            count = $fscanf(testfile, "%d", test_number);
+            $display("Test %d", test_number);
+            count = $fscanf(testfile, "%s", str);
+            if (str == "WAIT") begin
+                count = $fscanf(testfile, "%d", wait_cycles);
+            end
+
+            count = $fscanf(testfile, "%s", str);
+            if (str == "RF") begin
+                for (int i = 0; i < 32; i++) begin
+                    count = $fscanf(testfile, "%d", expected_rf[i]);
+                end
+            end
+
+            count = $fscanf(testfile, "%s", str);
+            if (str == "NUM_INST") begin
+                count = $fscanf(testfile, "%d", num_inst);
+            end
+
+            clear_mem();
+            count = $fscanf(testfile, "%s", str);
+            if (str == "INST") begin
+                for (int i = 0; i < num_inst; i++) begin
+                    count = $fscanf(testfile, "%x", i_mem[i]);
+                end
+            end
+            reset();
+            wait (cycles == wait_cycles);
+
+            for (int i = 0; i < 32; i++) begin
+                if (dut.decode0.rf.mem[i] != expected_rf[i]) begin
+                    $display("*** FAIL register file mismatch");
+                    test_fail = 1'b1;
+                    num_fail++;
+                    break;
+                end
+            end
+
+            if (!test_fail) begin
+                $display("PASS");
+            end
+        end
+    end
+
+    $display("Number of test failures: %d", num_fail);
+
+    $fclose(testfile);
+
+    $stop;
+endtask
 
 endmodule

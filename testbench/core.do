@@ -59,4 +59,4 @@ add wave d_mem
 # add wave -divider -height 10
 # add wave dut/wb0/*
 
-run 1us
+run -all
