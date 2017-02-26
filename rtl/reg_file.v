@@ -18,14 +18,6 @@ module reg_file(
 
 logic [31:0] mem [0:31];
 
-// This is a hack so that the simulation will work correctly.
-// TODO: Figure out how to set all the registers to zero on a reset
-initial begin
-    for (integer i = 0; i < 32; i++) begin
-        mem[i] = 32'd0;
-    end
-end
-
 always_comb begin
     rd1 = mem[ra1];
     rd2 = mem[ra2];

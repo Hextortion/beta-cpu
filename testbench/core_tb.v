@@ -57,6 +57,12 @@ core dut(
     .d_mem_oe(d_mem_oe)
 );
 
+initial begin
+    for (integer i = 0; i < 32; i++) begin
+        dut.decode0.rf.mem[i] = 32'd0;
+    end
+end
+
 // add the integers from 1 to 100 and store them in R0
 logic [31:0] test1[] = '{
     {`OPCODE_ADDC, 5'd0, 5'd31, 16'd0},
@@ -117,7 +123,7 @@ task reset();
 endtask
 
 initial begin
-    run_test(test2, 100);
+    run_test(test1, 100000);
     $finish;
 end
 
