@@ -28,16 +28,18 @@ end
 //
 // reset generation
 //
-task reset();
+task reset;
+begin
     rst = 1;
     wait_cycles(6);
     rst = 0;
+end
 endtask
 
 task wait_cycles(input [31:0] cycles);
-    begin
-        # (20 * cycles);
-    end
+begin
+    #(20 * cycles);
+end
 endtask
 
 parameter MEM_SIZE = 1024;
@@ -53,12 +55,11 @@ logic [31:0] i_mem [0:MEM_SIZE-1];
 logic [31:0] i_mem_r_addr;
 logic [31:0] i_mem_r_data;
 
-always_comb begin
-    i_mem_r_data = i_mem[i_mem_r_addr[11:2]];
-    d_mem_r_data = d_mem[d_mem_w_addr[11:2]];
-end
 
-always_ff @(posedge clk) begin
+assign i_mem_r_data = i_mem[i_mem_r_addr[11:2]];
+assign d_mem_r_data = d_mem[d_mem_w_addr[11:2]];
+
+always @(posedge clk) begin
     if (d_mem_we) begin
         d_mem[d_mem_w_addr[11:2]] <= d_mem_w_data;
     end
@@ -76,24 +77,32 @@ core dut(
     .d_mem_oe(d_mem_oe)
 );
 
+integer i;
 initial begin
-    for (integer i = 0; i < 32; i++) begin
+    for (i = 0; i < 32; i++) begin
         dut.decode0.rf.mem[i] = 32'd0;
     end
 end
 
-function void clear_mem;
-    for (int i = 0; i < 32 - 1; i++) begin
+task clear_mem;
+begin
+    for (i = 0; i < 32 - 1; i++) begin
         dut.decode0.rf.mem[i] = 32'd0;
     end
-    for (int i = 0; i < MEM_SIZE - 1; i++) begin
+    for (i = 0; i < MEM_SIZE - 1; i++) begin
         i_mem[i] = 32'd0;
         d_mem[i] = 32'd0;
     end
-endfunction
+end
+endtask
 
 initial begin
     process_file();
+end
+
+initial begin
+    $dumpfile("core_tb.vcd");
+    $dumpvars(0, core_tb);
 end
 
 task process_file;
@@ -105,8 +114,9 @@ task process_file;
     int num_fail;
     int test_number;
     logic test_fail;
+    int testfile;
 
-    int testfile = $fopen("testbench/testcases.txt", "r");
+    testfile = $fopen("../testbench/testcases.txt", "r");
     if (!testfile) begin
         $stop;
     end
@@ -148,8 +158,6 @@ task process_file;
                 if (dut.decode0.rf.mem[i] != expected_rf[i]) begin
                     $display("*** FAIL register file mismatch");
                     test_fail = 1'b1;
-                    num_fail++;
-                    break;
                 end
             end
 
