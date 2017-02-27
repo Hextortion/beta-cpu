@@ -1,69 +1,69 @@
 ///////////////////////////////////////////////////////////////////////////////
-//  File name: core.v
-//  Author: Stefan Dumitrescu
-//  
-//  Description: Connects all stages of the pipeline
+// File name: core.v
+// Author: Stefan Dumitrescu
+//
+// Description: Connects all stages of the pipeline
 ///////////////////////////////////////////////////////////////////////////////
 
 `include "defines.v"
 
 module core(
     // clock and reset
-    input logic clk,                    // clock
-    input logic rst,                    // reset
+    input clk,                    // clock
+    input rst,                    // reset
 
     // memory signals
-    input logic [31:0] i_mem_r_data,    // instruction memory read data
-    output logic [31:0] i_mem_r_addr,   // instruction memory read address
-    output logic [31:0] d_mem_w_data,   // data memory write data
-    output logic [31:0] d_mem_w_addr,   // data memory write address
-    input logic [31:0] d_mem_r_data,    // data memory read data
-    output logic d_mem_we,              // data memory write enable
-    output logic d_mem_oe               // data memory output enable
+    input [31:0] i_mem_r_data,    // instruction memory read data
+    output [31:0] i_mem_r_addr,   // instruction memory read address
+    output [31:0] d_mem_w_data,   // data memory write data
+    output [31:0] d_mem_w_addr,   // data memory write address
+    input [31:0] d_mem_r_data,    // data memory read data
+    output d_mem_we,              // data memory write enable
+    output d_mem_oe               // data memory output enable
 );
 
-logic stall;
-logic zr;
-logic op_jmp;
-logic op_beq;
-logic op_bne;
-logic op_ill;
+wire stall;
+wire zr;
+wire op_jmp;
+wire op_beq;
+wire op_bne;
+wire op_ill;
 
-logic [31:0] br_addr;
-logic [31:0] j_addr;
+wire [31:0] br_addr;
+wire [31:0] j_addr;
 
-logic [31:0] pc_fetch;
-logic [31:0] pc_decode;
-logic [31:0] pc_exec;
-logic [31:0] pc_mem;
+wire [31:0] pc_fetch;
+wire [31:0] pc_decode;
+wire [31:0] pc_exec;
+wire [31:0] pc_mem;
 
-logic [31:0] ir_fetch;
-logic [31:0] ir_decode;
-logic [31:0] ir_exec;
-logic [31:0] ir_mem;
-logic [31:0] ir_wb;
+wire [31:0] ir_fetch;
+wire [31:0] ir_decode;
+wire [31:0] ir_exec;
+wire [31:0] ir_mem;
+wire [31:0] ir_wb;
 
-logic [31:0] d_decode;
-logic [31:0] d_exec;
-logic [31:0] a_decode;
-logic [31:0] b_decode;
+wire [31:0] d_decode;
+wire [31:0] d_exec;
+wire [31:0] a_decode;
+wire [31:0] b_decode;
 
-logic [31:0] y_exec;
-logic [31:0] y_mem;
+wire [31:0] y_exec;
+wire [31:0] y_mem;
 
-logic [4:0] rf_w_addr;
-logic [31:0] rf_w_data;
-logic rf_we;
+wire [4:0] rf_w_addr;
+wire [31:0] rf_w_data;
+wire rf_we;
 
-logic op_st_ex;
-logic op_st_mem;
-logic op_st_wb;
+wire op_st_ex;
+wire op_st_mem;
+wire op_st_wb;
 
-logic op_ld_or_ldr_ex;
-logic op_ld_or_ldr_mem;
+wire op_ld_or_ldr_ex;
+wire op_ld_or_ldr_mem;
 
-logic op_br_or_jmp_ex;
-logic op_br_or_jmp_mem;
+wire op_br_or_jmp_ex;
+wire op_br_or_jmp_mem;
 
 fetch fetch0(
     .clk(clk),

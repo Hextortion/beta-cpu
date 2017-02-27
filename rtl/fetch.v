@@ -1,53 +1,52 @@
 ///////////////////////////////////////////////////////////////////////////////
-//  File name: fetch.v
-//  Author: Stefan Dumitrescu
-//  
-//  Description: Instruction fetch stage of the pipeline
+// File name: fetch.v
+// Author: Stefan Dumitrescu
+//
+// Description: Instruction fetch stage of the pipeline
 ///////////////////////////////////////////////////////////////////////////////
 
 `include "defines.v"
 
 module fetch(
     // clock and reset
-    input logic clk,                    // clock
-    input logic rst,                    // reset
+    input clk,                    // clock
+    input rst,                    // reset
 
     // control signals
-    input logic stall,                  // pipeline stall
-    input logic zr,                     // zero
-    input logic irq,                    // interrupt line
-    input logic op_ill,                 // illegal operation control signal
-    input logic op_jmp,                 // JMP control signal
-    input logic op_beq,                 // BEQ control signal
-    input logic op_bne,                 // BNE control signal
+    input stall,                  // pipeline stall
+    input zr,                     // zero
+    input irq,                    // interrupt line
+    input op_ill,                 // illegal operation control signal
+    input op_jmp,                 // JMP control signal
+    input op_beq,                 // BEQ control signal
+    input op_bne,                 // BNE control signal
 
     // datapath signals
-    input logic [31:0] br_addr,         // branch target address
-    input logic [31:0] j_addr,          // jump target address
+    input [31:0] br_addr,         // branch target address
+    input [31:0] j_addr,          // jump target address
 
-    input logic [31:0] i_mem_data,      // instruction memory data
-    output logic [31:0] i_mem_addr,     // instruction memory address
+    input [31:0] i_mem_data,      // instruction memory data
+    output [31:0] i_mem_addr,     // instruction memory address
 
-    output logic [31:0] pc_next,        // next pc value for next stage
-    output logic [31:0] ir_next         // next ir value for next stage
+    output [31:0] pc_next,        // next pc value for next stage
+    output reg [31:0] ir_next     // next ir value for next stage
 );
 
-logic [31:0] pc_fetch;
-logic [31:0] pc_fetch_next;
-logic [31:0] pc_plus_four;
+reg [31:0] pc_fetch;
+reg [31:0] pc_fetch_next;
+wire [31:0] pc_plus_four;
 
-logic branch_taken;
-logic current_exception;
-logic preceding_exception;
+wire branch_taken;
+wire current_exception;
+wire preceding_exception;
 
-always_comb begin
-    pc_plus_four = pc_fetch + 32'd4;
-    pc_next = pc_plus_four;
-    i_mem_addr = pc_fetch;
-    preceding_exception = 1'b0;
-    current_exception = 1'b0;
+assign pc_plus_four = pc_fetch + 32'd4;
+assign pc_next = pc_plus_four;
+assign i_mem_addr = pc_fetch;
+assign preceding_exception = 1'b0;
+assign current_exception = 1'b0;
 
-    // next program counter mux
+always @(*) begin
     if (irq || op_ill || preceding_exception || current_exception) begin
         if (op_ill) begin
             pc_fetch_next = `PC_ILLOP_ADDR;
@@ -63,9 +62,11 @@ always_comb begin
             default: pc_fetch_next = 'x;
         endcase
     end
+end
 
-    branch_taken = op_jmp || (op_beq && zr) || (op_bne && !zr);
-    // next instruction mux
+assign branch_taken = op_jmp || (op_beq && zr) || (op_bne && !zr);
+
+always @(*) begin
     if (!preceding_exception && !current_exception &&
         !irq && branch_taken || preceding_exception) begin
         ir_next = `INST_NOP;
@@ -78,7 +79,7 @@ always_comb begin
     end
 end
 
-always_ff @(posedge clk or posedge rst) begin
+always @(posedge clk or posedge rst) begin
     if (rst) begin
         pc_fetch <= `PC_RESET_ADDR;
     end else begin

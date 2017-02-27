@@ -1,27 +1,58 @@
 ///////////////////////////////////////////////////////////////////////////////
-//  File name: alu.v
-//  Author: Stefan Dumitrescu
-//  
-//  Description: This file contains the implementaion of the arithmetic
-//               logic unit
+// File name: alu.v
+// Author: Stefan Dumitrescu
+//
+// Description: This file contains the implementaion of the arithmetic
+//              logic unit
 ///////////////////////////////////////////////////////////////////////////////
 
 module alu(
     // control signals
-    input logic [5:0] fn,               // function to perform
+    input [5:0] fn,               // function to perform
 
     // datapath signals
-    input logic [31:0] a,               // first operand
-    input logic [31:0] b,               // second operand
-    output logic [31:0] y               // result
+    input [31:0] a,               // first operand
+    input [31:0] b,               // second operand
+    output reg [31:0] y               // result
 );
 
-// boolean functions
-logic [31:0] bool;
-logic [3:0] bool_fn;
-always_comb begin
-    bool_fn = fn[3:0];
-    for (integer i = 0; i < 32; i = i + 1) begin
+reg [31:0] bool;
+wire [3:0] bool_fn;
+reg [31:0] shift;
+wire [1:0] shift_sel;
+wire [4:0] shift_amount;
+wire afn; 
+wire arith_ov; 
+wire arith_ng; 
+wire arith_zr;
+wire [31:0] b_ng; 
+wire [31:0] arith;
+wire [1:0] cmp_sel;
+reg lsb;
+wire [31:0] cmp;
+wire [1:0] y_sel;
+
+assign bool_fn = fn[3:0];
+
+assign shift_sel = fn[1:0];
+assign shift_amount = b[4:0];
+
+assign afn = fn[0];
+assign b_ng = afn ? ~b : b;
+assign arith = a + b_ng + afn;
+assign arith_ov = a[31] && b_ng[31] && !arith[31] || 
+                  !a[31] && !b_ng[31] && arith[31];
+assign arith_ng = arith[31];
+assign arith_zr = ~|arith;
+
+assign cmp = {31'd0, lsb};
+assign cmp_sel = fn[2:1];
+
+assign y_sel = fn[5:4];
+
+integer i;
+always @(*) begin
+    for (i = 0; i < 32; i = i + 1) begin
         case ({b[i], a[i]})
             2'b00: bool[i] = bool_fn[0];
             2'b01: bool[i] = bool_fn[1];
@@ -31,53 +62,25 @@ always_comb begin
     end
 end
 
-// shifter
-logic [31:0] shift;
-logic [1:0] shift_sel;
-logic [4:0] shift_amount;
-always_comb begin
-    shift_sel = fn[1:0];
-    shift_amount = b[4:0];
+always @(*) begin
     case (shift_sel)
         2'b00: shift = a << shift_amount;
         2'b01: shift = a >> shift_amount;
         2'b11: shift = $signed(a) >>> shift_amount;
-        default: shift = 'x;
+        default: shift = 32'bx;
     endcase
 end
 
-// addition and subtraction unit
-logic afn, arith_ov, arith_ng, arith_zr;
-logic [31:0] b_ng, arith;
-always_comb begin
-    afn = fn[0];
-    b_ng = afn ? ~b : b;
-    arith = a + b_ng + afn;
-    arith_ov = a[31] && b_ng[31] && !arith[31] || 
-               !a[31] && !b_ng[31] && arith[31];
-    arith_ng = arith[31];
-    arith_zr = ~|arith;
-end
-
-// comparison unit
-logic [1:0] cmp_sel;
-logic lsb;
-logic [31:0] cmp;
-always_comb begin
-    cmp_sel = fn[2:1];
+always @(*) begin
     case (cmp_sel)
         2'b01: lsb = arith_zr;
         2'b10: lsb = arith_ng ^ arith_ov;
         2'b11: lsb = arith_zr | (arith_ng ^ arith_ov);
         default: lsb = 1'bx;
-    endcase
-    cmp = {31'd0, lsb};
+    endcase    
 end
 
-// output mux
-logic [1:0] y_sel;
-always_comb begin
-    y_sel = fn[5:4];
+always @(*) begin
     case (y_sel)
         2'b00: y = cmp;
         2'b01: y = arith;

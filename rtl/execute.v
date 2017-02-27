@@ -1,52 +1,55 @@
 ///////////////////////////////////////////////////////////////////////////////
-//  File name: execute.v
-//  Author: Stefan Dumitrescu
-//  
-//  Description: This file contains the implementaion of the execute stage
+// File name: execute.v
+// Author: Stefan Dumitrescu
+//
+// Description: This file contains the implementaion of the execute stage
 ///////////////////////////////////////////////////////////////////////////////
 
 `include "defines.v"
 
 module execute(
-    input logic clk,                        // clock
+    input clk,                        // clock
 
-    output logic op_ld_or_ldr,              // this IR is LD or LDR
-    output logic op_st,                     // this IR is ST
-    output logic op_br_or_jmp,              // this IR is BR or JMP
+    output op_ld_or_ldr,              // IR is LD or LDR
+    output op_st,                     // IR is ST
+    output op_br_or_jmp,              // IR is BR or JMP
 
     // datapath signals
-    input logic [31:0] pc,                  // next pc value for this stage
-    input logic [31:0] ir,                  // next ir value for this stage
-    input logic [31:0] a,                   // next a value for this stage
-    input logic [31:0] b,                   // next b value for this stage
-    input logic [31:0] d,                   // next d value for this stage
+    input [31:0] pc,                  // next pc value for this stage
+    input [31:0] ir,                  // next ir value for this stage
+    input [31:0] a,                   // next a value for this stage
+    input [31:0] b,                   // next b value for this stage
+    input [31:0] d,                   // next d value for this stage
 
-    output logic [31:0] pc_next,            // next pc value for the next stage
-    output logic [31:0] ir_next,            // next ir value for the next stage
-    output logic [31:0] y_next,             // next y value for the next stage
-    output logic [31:0] d_next              // next d value for the next stage
+    output [31:0] pc_next,            // next pc value for the next stage
+    output reg [31:0] ir_next,        // next ir value for the next stage
+    output [31:0] y_next,             // next y value for the next stage
+    output [31:0] d_next              // next d value for the next stage
 );
 
 // pipeline registers for the execute stage
-logic [31:0] pc_exec;
-logic [31:0] ir_exec;
-logic [31:0] a_exec;
-logic [31:0] b_exec;
-logic [31:0] d_exec;
+reg [31:0] pc_exec;
+reg [31:0] ir_exec;
+reg [31:0] a_exec;
+reg [31:0] b_exec;
+reg [31:0] d_exec;
 
-logic op_ld_or_st;
-logic op_ldr;
-logic op_ld;
-logic op_jmp;
-logic op_beq;
-logic op_bne;
-logic [5:0] opcode;
-logic [5:0] fn;
+wire op_ld_or_st;
+wire op_ldr;
+wire op_ld;
+wire op_jmp;
+wire op_beq;
+wire op_bne;
+wire [5:0] opcode;
+reg [5:0] fn;
 
-logic preceding_exception;
-logic current_exception;
+wire preceding_exception;
+wire current_exception;
 
-always_ff @(posedge clk) begin
+assign pc_next = pc_exec;
+assign d_next = d_exec;
+
+always @(posedge clk) begin
     pc_exec <= pc;
     ir_exec <= ir;
     a_exec <= a;
@@ -54,28 +57,31 @@ always_ff @(posedge clk) begin
     d_exec <= d;
 end
 
-always_comb begin
-    // Opcode Table (columns = opcode[2:0], rows = opcode[5:3])
-    //     | 000  | 001  | 010  | 011   | 100    | 101    | 110    | 111 |
-    // 000 |      |      |      |       |        |        |        |     |
-    // 001 |      |      |      |       |        |        |        |     |
-    // 010 |      |      |      |       |        |        |        |     |
-    // 011 | LD   | ST   |      | JMP   | BEQ    | BNE    |        | LDR |
-    // 100 | ADD  | SUB  |      |       | CMPEQ  | CMPLT  | CMPLE  |     |
-    // 101 | AND  | OR   | XOR  | XNOR  | SHL    | SHR    | SRA    |     |
-    // 110 | ADDC | SUBC |      |       | CMPEQC | CMPLTC | CMPLEC |     |
-    // 111 | ANDC | ORC  | XORC | XNORC | SHLC   | SHRC   | SRAC   |     |
-    opcode = ir_exec[31:26];
-    op_st = !opcode[5] && !opcode[2] && !opcode[1] && opcode[0];
-    op_ld = !opcode[5] && !opcode[2] && !opcode[1] && !opcode[0];
-    op_jmp = !opcode[5] && !opcode[2] && opcode[1] && opcode[0];
-    op_beq = !opcode[5] && opcode[2] && !opcode[1] && !opcode[0];
-    op_bne = !opcode[5] && opcode[2] && !opcode[1] && opcode[0];
-    op_br_or_jmp = op_jmp | op_bne | op_beq;
-    op_ld_or_st = !opcode[5] && !opcode[2] && !opcode[1];
-    op_ldr = opcode[0] && opcode[1] && opcode[2];
-    op_ld_or_ldr = op_ldr || op_ld;
+///////////////////////////////////////////////////////////////////////////////
+// Opcode Table (columns = opcode[2:0], rows = opcode[5:3])
+//     | 000  | 001  | 010  | 011   | 100    | 101    | 110    | 111 |
+// 000 |      |      |      |       |        |        |        |     |
+// 001 |      |      |      |       |        |        |        |     |
+// 010 |      |      |      |       |        |        |        |     |
+// 011 | LD   | ST   |      | JMP   | BEQ    | BNE    |        | LDR |
+// 100 | ADD  | SUB  |      |       | CMPEQ  | CMPLT  | CMPLE  |     |
+// 101 | AND  | OR   | XOR  | XNOR  | SHL    | SHR    | SRA    |     |
+// 110 | ADDC | SUBC |      |       | CMPEQC | CMPLTC | CMPLEC |     |
+// 111 | ANDC | ORC  | XORC | XNORC | SHLC   | SHRC   | SRAC   |     |
+///////////////////////////////////////////////////////////////////////////////
 
+assign opcode = ir_exec[31:26];
+assign op_st = !opcode[5] && !opcode[2] && !opcode[1] && opcode[0];
+assign op_ld = !opcode[5] && !opcode[2] && !opcode[1] && !opcode[0];
+assign op_jmp = !opcode[5] && !opcode[2] && opcode[1] && opcode[0];
+assign op_beq = !opcode[5] && opcode[2] && !opcode[1] && !opcode[0];
+assign op_bne = !opcode[5] && opcode[2] && !opcode[1] && opcode[0];
+assign op_br_or_jmp = op_jmp | op_bne | op_beq;
+assign op_ld_or_st = !opcode[5] && !opcode[2] && !opcode[1];
+assign op_ldr = opcode[0] && opcode[1] && opcode[2];
+assign op_ld_or_ldr = op_ldr || op_ld;
+
+always @(*) begin
     // generating the correct fn bits for the ALU
     if (opcode[5]) begin
         case (opcode[3:2])
@@ -163,10 +169,12 @@ always_comb begin
             fn = 'x;
         end
     end
+end
 
-    preceding_exception = 1'b0;
-    current_exception = 1'b0;
+assign preceding_exception = 1'b0;
+assign current_exception = 1'b0;
 
+always @(*) begin
     if (preceding_exception) begin
         ir_next = `INST_NOP;
     end else begin
@@ -176,9 +184,6 @@ always_comb begin
             ir_next = ir_exec;
         end
     end
-
-    pc_next = pc_exec;
-    d_next = d_exec;
 end
 
 alu alu0(
