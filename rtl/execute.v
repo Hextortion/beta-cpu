@@ -122,7 +122,7 @@ always_comb begin
             // 10abcd       bit-wise boolean    Y[i] = F_abcd(A[i], B[i])
             ///////////////////////////////////////////////////////////////////
             2'b10: begin
-                fn[1:0] = `ALU_MUX_BOOL;
+                fn[5:4] = `ALU_MUX_BOOL;
 
                 case ({opcode[1], opcode[0]})
                     2'b00: fn[3:0] = 4'b1000;     // AND
@@ -140,7 +140,8 @@ always_comb begin
             // 11xx11       arith shift right   Y = A >> B (sign extended)
             ///////////////////////////////////////////////////////////////////
             2'b11: begin
-                fn[1:0] = `ALU_MUX_SHIFT;
+                fn[5:4] = `ALU_MUX_SHIFT;
+                fn[3:2] = 2'b00;
 
                 case ({opcode[1], opcode[0]})
                     2'b00: fn[2:1] = 2'b00;     // SHL

@@ -54,7 +54,7 @@ always_comb begin
     b_ng = afn ? ~b : b;
     arith = a + b_ng + afn;
     arith_ov = a[31] && b_ng[31] && !arith[31] || 
-               !a[31] && b_ng[31] && arith[31];
+               !a[31] && !b_ng[31] && arith[31];
     arith_ng = arith[31];
     arith_zr = ~|arith;
 end
@@ -64,7 +64,7 @@ logic [1:0] cmp_sel;
 logic lsb;
 logic [31:0] cmp;
 always_comb begin
-    cmp_sel = fn[1:0];
+    cmp_sel = fn[2:1];
     case (cmp_sel)
         2'b01: lsb = arith_zr;
         2'b10: lsb = arith_ng ^ arith_ov;
