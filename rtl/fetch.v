@@ -59,7 +59,7 @@ always @(*) begin
             3'b010: pc_fetch_next = zr ? br_addr : pc_plus_four;
             3'b001: pc_fetch_next = zr ? pc_plus_four : br_addr;
             3'b000: pc_fetch_next = pc_plus_four;
-            default: pc_fetch_next = 'x;
+            default: pc_fetch_next = 32'bx;
         endcase
     end
 end

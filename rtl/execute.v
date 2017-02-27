@@ -99,7 +99,7 @@ always @(*) begin
                     2'b00: fn[2:1] = 2'b01;     // CMPEQ
                     2'b01: fn[2:1] = 2'b10;     // CMPLT
                     2'b10: fn[2:1] = 2'b11;     // CMPLE
-                    default: fn[2:1] = 'x;
+                    default: fn[2:1] = 2'bx;
                 endcase
 
                 fn[3] = 1'b0;
@@ -153,7 +153,7 @@ always @(*) begin
                     2'b00: fn[2:1] = 2'b00;     // SHL
                     2'b01: fn[2:1] = 2'b01;     // SHR
                     2'b10: fn[2:1] = 2'b11;     // SRA
-                    default: fn[2:1] = 'x;
+                    default: fn[2:1] = 2'bx;
                 endcase
             end
         endcase
@@ -166,7 +166,7 @@ always @(*) begin
             fn[5:4] = `ALU_MUX_BOOL;
             fn[3:0] = 4'b1010;
         end else begin
-            fn = 'x;
+            fn = 6'bx;
         end
     end
 end

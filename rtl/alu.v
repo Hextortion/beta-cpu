@@ -13,10 +13,10 @@ module alu(
     // datapath signals
     input [31:0] a,               // first operand
     input [31:0] b,               // second operand
-    output reg [31:0] y               // result
+    output reg [31:0] y           // result
 );
 
-reg [31:0] bool;
+reg [31:0] bool_result;
 wire [3:0] bool_fn;
 reg [31:0] shift;
 wire [1:0] shift_sel;
@@ -54,10 +54,10 @@ integer i;
 always @(*) begin
     for (i = 0; i < 32; i = i + 1) begin
         case ({b[i], a[i]})
-            2'b00: bool[i] = bool_fn[0];
-            2'b01: bool[i] = bool_fn[1];
-            2'b10: bool[i] = bool_fn[2];
-            2'b11: bool[i] = bool_fn[3];
+            2'b00: bool_result[i] = bool_fn[0];
+            2'b01: bool_result[i] = bool_fn[1];
+            2'b10: bool_result[i] = bool_fn[2];
+            2'b11: bool_result[i] = bool_fn[3];
         endcase
     end
 end
@@ -77,14 +77,14 @@ always @(*) begin
         2'b10: lsb = arith_ng ^ arith_ov;
         2'b11: lsb = arith_zr | (arith_ng ^ arith_ov);
         default: lsb = 1'bx;
-    endcase    
+    endcase
 end
 
 always @(*) begin
     case (y_sel)
         2'b00: y = cmp;
         2'b01: y = arith;
-        2'b10: y = bool;
+        2'b10: y = bool_result;
         2'b11: y = shift;
     endcase
 end
