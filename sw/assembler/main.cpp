@@ -42,6 +42,9 @@ string read_string(size_t& offset, string& text);
 bool read_expression(size_t& offset, string& text, int& result);
 bool read_term(size_t& offset, string& text, int& result);
 void read_operand(size_t& offset, string& text);
+int read_literal(size_t& offset, string& text);
+int read_char_literal(size_t& offset, string& text);
+int read_symbol_value(size_t& offset, string& text);
 void call_macro(vector<int> macro_args, macro *m);
 
 string get_file_string(string& filename)
@@ -315,6 +318,86 @@ string read_string(
     return result.str();
 }
 
+int read_literal(
+    size_t& offset,
+    string& text)
+{
+    int base = 10;
+    size_t start = offset;
+    skip_token(offset, text);
+    string number = text.substr(start, offset - start);
+    string number_prefix = number.substr(0, 2);
+
+    if (number_prefix == "0x" || number_prefix == "0X") {
+        base = 16;
+        number = number.substr(2);
+    } else if (number_prefix == "0b" || number_prefix == "0B") {
+        base = 2;
+        number = number.substr(2);
+    } else if (number[0] == '0') {
+        if (number.length() > 1) {
+            base = 8;
+            number = number.substr(1);
+        }
+    }
+
+    unsigned long lresult = std::stoul(number, nullptr, base);
+    return (int)lresult;   
+}
+
+int read_symbol_value(
+    size_t& offset,
+    string& text)
+{
+    size_t start = offset;
+    skip_token(offset, text);
+    string name = text.substr(start, offset - start);
+    symbol *s = NULL;
+
+    if (g_symbol_table.get_symbol(name, true, &s)) {
+        if (pass == 2 && s->type_ == symbol::UNDEF) {
+            cout << "undefined symbol" << name << endl;
+            exit(-1);
+        } else {
+            return s->value_;
+        }
+    } else {
+        cout << "error getting symbol" << endl;
+        exit(-1);
+    }    
+}
+
+bool read_char_literal(
+    size_t& offset,
+    string& text,
+    int& result)
+{
+    char ch = text[offset];
+    offset += 3;
+    if (offset < text.length()) {
+        if (text[offset - 2] == '\\') {
+            offset++;
+            ch = text[offset - 2];
+            switch (ch) {
+                case 'b': ch = '\b'; break;
+                case 'f': ch = '\f'; break;
+                case 'n': ch = '\n'; break;
+                case 'r': ch = '\r'; break;
+                case 't': ch = '\t'; break;
+            }        
+        } else {
+            ch = text[offset - 2];
+        }
+        if (offset < text.length() && text[offset - 1] == '\'') {
+            result = (int)ch;
+            return true;
+        }
+        cout << "bad character constant" << endl;
+        exit(-1);
+    }
+    return false;
+}
+
 bool read_term(
     size_t& offset, 
     string& text, 
@@ -330,65 +413,12 @@ bool read_term(
     char ch = text[offset];
 
     if (isdigit(ch)) {
-        int base = 10;
-        size_t start = offset;
-        skip_token(offset, text);
-        string number = text.substr(start, offset - start);
-        string number_prefix = number.substr(0, 2);
-
-        if (number_prefix == "0x" || number_prefix == "0X") {
-            base = 16;
-            number = number.substr(2);
-        } else if (number_prefix == "0b" || number_prefix == "0B") {
-            base = 2;
-            number = number.substr(2);
-        } else if (number[0] == '0') {
-            if (number.length() > 1) {
-                base = 8;
-                number = number.substr(1);
-            }
-        }
-
-        unsigned long lresult = std::stoul(number, nullptr, base);
-        result = (int)lresult;
-
+        result = read_literal(offset, text);
     } else if (is_symbol_start_char(ch)) {
-        size_t start = offset;
-        skip_token(offset, text);
-        string name = text.substr(start, offset - start);
-        symbol *s = NULL;
-        if (g_symbol_table.get_symbol(name, true, &s)) {
-            if (pass == 2 && s->type_ == symbol::UNDEF) {
-                cout << "undefined symbol" << name << endl;
-                exit(-1);
-            } else {
-                result = s->value_;
-            }
-        } else {
-            cout << "error getting symbol" << endl;
-            exit(-1);
-        }
+        result = read_symbol_value(offset, text);
     } else if (ch == '\'') {
-        offset += 3;
-        if (offset < text.length()) {
-            if (text[offset - 2] == '\\') {
-                offset++;
-                ch = text[offset - 2];
-                switch (ch) {
-                    case 'b': ch = '\b'; break;
-                    case 'f': ch = '\f'; break;
-                    case 'n': ch = '\n'; break;
-                    case 'r': ch = '\r'; break;
-                    case 't': ch = '\t'; break;
-                }        
-            } else {
-                ch = text[offset - 2];
-            }
-            if (offset < text.length() && text[offset - 1] == '\'') {
-                result = (int)ch;
-                return true;
-            }
-            cout << "bad character constant" << endl;
+        if (!read_char_literal(offset, text, result)) {
+            cout << "unable to read char literal" << endl;
             exit(-1);
         }
     } else if (ch == '-') {
@@ -401,15 +431,13 @@ bool read_term(
         result = ~result;
     } else if (ch == '(') {
         offset++;
-        int v;
-        if (read_expression(offset, text, v)) {
+        if (read_expression(offset, text, result)) {
             skip_blanks(offset, text);
             if (offset >= text.length() || text[offset] != ')') {
                 cout << "unbalanced parenthesis in expression" << endl;
                 exit(-1);
             } else {
                 offset++;
-                result = v;
             }
         }
     } else {
