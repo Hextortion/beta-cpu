@@ -425,12 +425,10 @@ bool read_expression(
     string& text, 
     int& result)
 {
-    int v1;
-    bool v1_success = read_term(offset, text, v1);
-    int v2;
-    bool v2_success;
+    int term;
+    bool valid = read_term(offset, text, result);
 
-    while (v1_success) {
+    while (valid) {
         skip_blanks(offset, text);
         if (offset >= text.length()) {
             break;
@@ -438,52 +436,35 @@ bool read_expression(
 
         switch (text[offset++]) {
             case '+':
-                v2_success = read_term(offset, text, v2);
-                if (!v2_success) {
-                    v1_success = false;
-                } else {
-                    v1 = v1 + v2;
+                if (valid = read_term(offset, text, term)) {
+                    result = result + term;
                 }
+                continue;
             case '-':
-                v2_success = read_term(offset, text, v2);
-                if (!v2_success) {
-                    v1_success = false;
-                } else {
-                    v1 = v1 - v2;
+                if (valid = read_term(offset, text, term)) {
+                    result = result - term;
                 }
+                continue;
             case '*':
-                v2_success = read_term(offset, text, v2);
-                if (!v2_success) {
-                    v1_success = false;
-                } else {
-                    v1 = v1 * v2;
+                if (valid = read_term(offset, text, term)) {
+                    result = result * term;
                 }
+                continue;
             case '/':
-                v2_success = read_term(offset, text, v2);
-                if (!v2_success) {
-                    v1_success = false;
-                } else {
-                    v1 = v1 / v2;
+                if (valid = read_term(offset, text, term)) {
+                    result = result / term;
                 }
+                continue;
             case '%':
-                v2_success = read_term(offset, text, v2);
-                if (!v2_success) {
-                    v1_success = false;
-                } else {
-                    int v = v1 % v2;
-                    if (v < 0) {
-                        v += v2;
-                    }
-                    v1 = v;
+                if (valid = read_term(offset, text, term)) {
+                    result = result % term;
+                    result = result < 0 ? result + term : result;
                 }
                 continue;
             case '>':
                 if (check_for_char('>', offset, text)) {
-                    v2_success = read_term(offset, text, v2);
-                    if (!v2_success) {
-                        v1_success = false;
-                    } else {
-                        v1 = v1 >> v2;
+                    if (valid = read_term(offset, text, term)) {
+                        result = result >> term;
                     }
                     continue;
                 }
@@ -491,11 +472,8 @@ bool read_expression(
                 goto exit;
             case '<':
                 if (check_for_char('<', offset, text)) {
-                    v2_success = read_term(offset, text, v2);
-                    if (!v2_success) {
-                        v1_success = false;
-                    } else {
-                        v1 = v1 << v2;
+                    if (valid = read_term(offset, text, term)) {
+                        result = result << term;
                     }
                     continue;
                 }
@@ -508,8 +486,7 @@ bool read_expression(
     }
 
     exit:
-        result = v1;
-        return v1_success;
+    return valid;
 }
 
 void read_operand(
