@@ -2,4 +2,6 @@ rtl_work
 work
 *.ini
 *.wlf
+*.obj
+*.exe
 transcript
