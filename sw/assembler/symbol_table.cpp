@@ -51,18 +51,17 @@ bool symbol_table::get_macro(
     macro** macro_out)
 {
     symbol *s = NULL;
+    bool ret = false;
     if (get_symbol(macro_name, false, &s)) {
-        vector<macro>::iterator it = s->macro_defs_.begin();
+        auto it = s->macro_defs_.begin();
         for (; it != s->macro_defs_.end(); ++it) {
             if (it->params_.size() == num_params) {
                 *macro_out = (macro *)&(*it);
-                return true;
+                ret = true;
             }
         }
-        return false;
-    } else {
-        return false;
     }
+    return ret;
 }
 
 bool symbol_table::get_symbol(
@@ -70,11 +69,10 @@ bool symbol_table::get_symbol(
     bool create,
     symbol** symbol_out)
 {
-    unordered_map<string, symbol>::iterator it = table_.find(symbol_name);
+    auto it = table_.find(symbol_name);
     if (it == table_.end()) {
         if (create) {
-            pair<unordered_map<string, symbol>::iterator, bool> emplace_pair;
-            emplace_pair = table_.emplace(symbol_name, 
+            auto emplace_pair = table_.emplace(symbol_name, 
                     symbol(symbol_name, 0, symbol::UNDEF));
             if (emplace_pair.second) {
                 *symbol_out = (symbol *)&(emplace_pair.first->second);
