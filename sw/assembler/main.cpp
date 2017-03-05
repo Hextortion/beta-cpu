@@ -218,7 +218,7 @@ void scan(string& text)
             if (ch == ':') {
                 assign_label(offset, token);
                 continue;
-            } else if (ch = '=') {
+            } else if (ch == '=') {
                 assign_value(offset, text, token);
                 continue;
             }
@@ -602,7 +602,7 @@ void call_macro(
 
     for (int i = 0; i < m->params_.size(); ++i) {
         symbol *s = NULL;
-        if (g_symbol_table.get_symbol(m->params_[i], false, &s)) {
+        if (g_symbol_table.get_symbol(m->params_[i], true, &s)) {
             saved_values.push_back(s->value_);
             saved_types.push_back(s->type_);        
             s->value_ = macro_args[i];
@@ -618,7 +618,7 @@ void call_macro(
 
     for (int i = 0; i < m->params_.size(); ++i) {
         symbol *s = NULL;
-        if (g_symbol_table.get_symbol(m->params_[i], false, &s)) {      
+        if (g_symbol_table.get_symbol(m->params_[i], true, &s)) {      
             s->value_ = saved_values[i];
             s->type_ = saved_types[i];
         } else {
