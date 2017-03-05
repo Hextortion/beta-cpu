@@ -42,14 +42,15 @@ symbol::symbol(string& name) : symbol(name, 0, UNDEF) {}
 //     return false;
 // }
 
-// ostream& operator<<(ostream& os, const symbol& s)
-// {
-//     os << "symbol " << s.name_ << " = " << s.value_;
-//     for (auto const& m : s.macro_defs_) {
-//         os << m;
-//     }
-//     return os;
-// }
+ostream& operator<<(ostream& os, const symbol& s)
+{
+    os << "symbol " << s.name_ << " = " << s.value_;
+    for (auto & m : s.macro_defs_) {
+        os << m;
+    }
+    os << "\n";
+    return os;
+}
 
 // int main()
 // {

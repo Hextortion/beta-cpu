@@ -1,6 +1,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "macro.h"
 #include "symbol.h"
@@ -10,6 +11,7 @@ using std::unordered_map;
 using std::string;
 using std::vector;
 using std::pair;
+using std::ostream;
 
 bool symbol_table::add_macro(
     string& macro_name, 
@@ -94,4 +96,12 @@ void symbol_table::initialize_macros()
     for (auto &it : table_) {
         it.second.macro_defs_.clear();
     }
+}
+
+ostream& operator<<(ostream& os, const symbol_table& st)
+{
+    for (auto const& it : st.table_) {
+        os << it.second;
+    }
+    return os;
 }

@@ -20,4 +20,6 @@ public:
     bool called_;
 };
 
+ostream& operator<<(ostream& os, const macro& m);
+
 #endif

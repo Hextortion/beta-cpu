@@ -28,4 +28,6 @@ public:
     vector<macro> macro_defs_;
 };
 
+ostream& operator<<(ostream& os, const symbol& s);
+
 #endif

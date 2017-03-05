@@ -40,6 +40,8 @@ public:
         bool create,
         symbol** symbol_out);
 
+    friend ostream& operator<<(ostream& o, const symbol_table& st);
+
 private:
     unordered_map<string, symbol> table_;
 };
