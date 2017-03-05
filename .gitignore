@@ -4,4 +4,6 @@ work
 *.wlf
 *.obj
 *.exe
+*.pdb
+*.ilk
 transcript
