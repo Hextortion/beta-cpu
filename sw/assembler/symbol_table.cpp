@@ -88,3 +88,10 @@ bool symbol_table::get_symbol(
         return true;
     }
 }
+
+void symbol_table::initialize_macros()
+{
+    for (auto &it : table_) {
+        it.second.macro_defs_.clear();
+    }
+}

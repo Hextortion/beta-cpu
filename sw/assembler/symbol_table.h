@@ -15,6 +15,7 @@ using std::vector;
 class symbol_table {
 public:
     symbol_table() = default;
+    void initialize_macros();
 
     bool add_macro(
         string& macro_name, 

@@ -46,6 +46,11 @@ int read_literal(size_t& offset, string& text);
 int read_char_literal(size_t& offset, string& text);
 int read_symbol_value(size_t& offset, string& text);
 void call_macro(vector<int> macro_args, macro *m);
+void assign_label(size_t& offset, string& token);
+void assign_value(size_t& offset, string& text, string& token);
+void assemble_byte(int v);
+void assemble_string(size_t& offset, string& text);
+int assemble_octal_digits(char ch, size_t& offset, string& text);
 
 string get_file_string(string& filename)
 {
@@ -160,7 +165,9 @@ void read_macro(
     offset = end + 1;
 
     if (!g_symbol_table.add_macro(macro_name, macro_params, macro_body)) {
-        cout << "failed to add macro" << endl;
+        cout << "pass: " << pass << endl;
+        cout << "failed to add macro " << macro_name << endl;
+        exit(-1);
     }
 }
 
@@ -188,68 +195,31 @@ void scan(string& text)
                 read_macro(offset, text);
                 continue;
             } else if (token == ".align") {
-                // int align = 4;
-                // if (!is_eol(ch)) {
-                //     int v
-                //     read_expression(offset, text, v);                    
-                // }
-                // while ((dot.value % align) != 0) {
-                //     assemble_byte(0);
-                // }
+                int align = 4;
+                if (!is_eol(ch)) {
+                    read_expression(offset, text, align);
+                }
+                while ((dot.value_ % align) != 0) {
+                    assemble_byte(0);
+                }
                 continue;
             } else if (token == ".text") {
-                // assemble_string();
-                // assemble_byte();
-                // while (dot.value % 4 != 0) {
-                //     assemble_byte(0);
-                // }
+                assemble_string(offset, text);
+                assemble_byte(0);
+                while (dot.value_ % 4 != 0) {
+                    assemble_byte(0);
+                }
                 continue;
             } else if (token == ".ascii") {
-                // assemble_string();
-                // continue;
+                assemble_string(offset, text);
+                continue;
             }
 
             if (ch == ':') {
-                offset++;
-                symbol *s = NULL;
-                if (g_symbol_table.get_symbol(token, true, &s)) {
-                    if (pass == 1) {
-                        if (s->type_ != symbol::UNDEF) {
-                            cout << "multiply defined symbol " << token << endl;
-                            exit(-1);
-                        } else {
-                            s->type_ = symbol::LABEL;
-                            s->value_ = dot.value_;
-                        }
-                    } else {
-                        if (s->value_ != dot.value_) {
-                            cout << "phase error in symbol definition "
-                                    << token << endl;
-                            exit(-1);
-                        }
-                    }
-                }
+                assign_label(offset, token);
                 continue;
             } else if (ch = '=') {
-                offset++;
-                symbol *s = NULL;
-                if (g_symbol_table.get_symbol(token, true, &s)) {
-                    int v;
-                    if (read_expression(offset, text, v)) {
-                        if (s->type_ == symbol::LABEL) {
-                            cout << "illegal redefinition of symbol " 
-                                    << token << endl;
-                            exit(-1);
-                        } else {
-                            s->type_ = symbol::ASSIGN;
-                            s->value_ = v;
-                            if (s->name_ == "." && dot.value_ > max_dot) 
-                            {
-                                max_dot = dot.value_;
-                            }
-                        }
-                    }
-                }
+                assign_value(offset, text, token);
                 continue;
             }
 
@@ -278,6 +248,56 @@ void scan(string& text)
         // Skip the newline.
         offset++;
     }
+}
+
+void assign_value(
+    size_t& offset,
+    string& text,
+    string& token)
+{
+    offset++;
+    symbol *s = NULL;
+    if (g_symbol_table.get_symbol(token, true, &s)) {
+        int v;
+        if (read_expression(offset, text, v)) {
+            if (s->type_ == symbol::LABEL) {
+                cout << "illegal redefinition of symbol " 
+                        << token << endl;
+                exit(-1);
+            } else {
+                s->type_ = symbol::ASSIGN;
+                s->value_ = v;
+                if (s->name_ == "." && dot.value_ > max_dot) {
+                    max_dot = dot.value_;
+                }
+            }
+        }
+    }    
+}
+
+void assign_label(
+    size_t& offset,
+    string& token)
+{
+    offset++;
+    symbol *s = NULL;
+    if (g_symbol_table.get_symbol(token, true, &s)) {
+        if (pass == 1) {
+            if (s->type_ != symbol::UNDEF) {
+                cout << "multiply defined symbol " << token << endl;
+                exit(-1);
+            } else {
+                s->type_ = symbol::LABEL;
+                s->value_ = dot.value_;
+            }
+        } else {
+            if (s->value_ != dot.value_) {
+                cout << "phase error in symbol definition "
+                        << token << endl;
+                exit(-1);
+            }
+        }
+    }    
 }
 
 string read_string(
@@ -442,6 +462,7 @@ bool read_term(
         }
     } else {
         cout << "illegal term in expression " << offset << endl;
+        cout << text.substr(offset) << endl;
         exit(-1);
     }
 
@@ -564,7 +585,7 @@ void read_operand(
     }
     int v;
     if (read_expression(offset, text, v)) {
-        // assemble_byte(v);
+        assemble_byte(v);
     } else {
         cout << "illegal operand" << endl;
         exit(-1);
@@ -607,19 +628,106 @@ void call_macro(
     }
 }
 
-int main()
+void assemble_byte(int v)
 {
-    // string filename;
-    // cout << "Enter file name to open: ";
-    // cin >> filename;
-    // cout << filename << "\n";
+    if (pass == 2) {
+        cout << "mem[" << dot.value_ << "] = " << v << endl;
+    }
 
-    string filename = "test.uasm";
+    dot.value_++;
+
+    if (dot.value_ > max_dot) {
+        max_dot = dot.value_;
+    }
+}
+
+void assemble_string(
+    size_t& offset,
+    string& text)
+{
+    if (check_for_char('\"', offset, text)) {
+        while (offset < text.length()) {
+            char ch = text[offset++];
+            switch (ch) {
+                case '\"':
+                    return;
+                case '\n':
+                    goto exit_loop;
+                case '\\':
+                    if (offset < text.length()) {
+                        ch = text[offset++];
+                    }
+                    switch (ch) {
+                        case 'b': ch = '\b'; break;
+                        case 'f': ch = '\f'; break;
+                        case 'n': ch = '\n'; break;
+                        case 'r': ch = '\r'; break;
+                        case 't': ch = '\t'; break;
+                        case '\\': ch = '\\'; break;
+                        default:
+                            if (ch >= '0' && ch <= '7') {
+                                ch = assemble_octal_digits(ch, offset, text);
+                            }
+                    }
+                default:
+                    assemble_byte(ch);
+                    break;
+            }
+        }
+        exit_loop:
+        cout << "unterminated string constant" << endl;
+        exit(-1);
+    }
+}
+
+int assemble_octal_digits(
+    char ch, 
+    size_t& offset, 
+    string& text)
+{
+    int result = ch - '0';
+    if (offset < text.length()) {
+        ch = text[offset];
+        if (ch >= '0' && ch <= '7') {
+            offset++;
+            result = result * 8 + ch - '0';
+            if (offset < text.length()) {
+                ch = text[offset];
+                if (ch >= '0' && ch <= '7') {
+                    offset++;
+                    result = result * 7 + ch - '0';
+                }
+            }
+        }
+    }
+    return result;
+}
+
+int main(
+    int argc,
+    char *argv[])
+{
+    if (argc < 2) {
+        return -1;
+    }
+
+    string filename = argv[1];
+    string text = get_file_string(filename);
+
     string dot_name = ".";
     dot = symbol(dot_name, 0);
-    string text = get_file_string(filename);
+    max_dot = 0;
+    pass = 1;
+    g_symbol_table.initialize_macros();
+    
     scan(text);
-    // cout << text << endl;
+
+    dot.value_ = 0;
+    max_dot = 0;
+    pass = 2;
+    g_symbol_table.initialize_macros();
+
+    scan(text);
 
     return 0;
 }
