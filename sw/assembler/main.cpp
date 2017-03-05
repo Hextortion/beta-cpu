@@ -52,6 +52,13 @@ void assemble_byte(int v);
 void assemble_string(size_t& offset, string& text);
 int assemble_octal_digits(char ch, size_t& offset, string& text);
 
+void get_macro_info(
+    size_t& offset,
+    string& text,
+    string& macro_name,
+    vector<int>& macro_args,
+    macro*& m);
+
 string get_file_string(string& filename)
 {
     ifstream ifs(filename);
@@ -455,6 +462,7 @@ bool read_term(
             skip_blanks(offset, text);
             if (offset >= text.length() || text[offset] != ')') {
                 cout << "unbalanced parenthesis in expression" << endl;
+                cout << offset << " " << text[offset] << endl;
                 exit(-1);
             } else {
                 offset++;
@@ -538,51 +546,63 @@ bool read_expression(
     return valid;
 }
 
+void get_macro_info(
+    size_t& offset,
+    string& text,
+    string& macro_name,
+    vector<int>& macro_args,
+    macro*& m)
+{
+    while (true) {
+        if (check_for_char(')', offset, text)) {
+            break;
+        }
+        check_for_char(',', offset, text);
+        int v;
+        if (read_expression(offset, text, v)) {
+            macro_args.push_back(v);
+        } else {
+            cout << "expression or close paren expected" << endl;
+            exit(-1);
+        }
+    }
+
+    if (g_symbol_table.get_macro(macro_name, macro_args.size(), &m)) {
+        if (m->called_) {
+            cout << "recursive call to macro " << macro_name << endl;
+            exit(-1);
+        }
+    } else {
+        cout << "can't find macro definition for " << macro_name 
+                << " with " << macro_args.size() 
+                << " arguments" << endl;
+        exit(-1);
+    }
+}
+
 void read_operand(
     size_t& offset, 
     string& text)
 {
     skip_blanks(offset, text);
+
     if (is_symbol_start_char(text[offset])) {
         size_t start = offset;
         skip_token(offset, text);
         size_t end = offset;
 
-        if (check_for_char('(', offset, text)) {
+        if (check_for_char('(', offset, text)) {         
             string macro_name = text.substr(start, end - start);
-
             vector<int> macro_args;
-            while (true) {
-                if (check_for_char(')', offset, text)) {
-                    break;
-                }
-                check_for_char(',', offset, text);
-                int v;
-                if (read_expression(offset, text, v)) {
-                    macro_args.push_back(v);
-                } else {
-                    cout << "expression or close paren expected" << endl;
-                    exit(-1);
-                }
-            }
-
             macro *m = NULL;
-            if (g_symbol_table.get_macro(macro_name, macro_args.size(), &m)) {
-                if (m->called_) {
-                    cout << "recursive call to macro " << macro_name << endl;
-                    exit(-1);
-                }
-            } else {
-                cout << "can't find macro definition for " << macro_name 
-                        << " with " << macro_args.size() 
-                        << " arguments" << endl;
-                exit(-1);
-            }
-
+            get_macro_info(offset, text, macro_name, macro_args, m);
             call_macro(macro_args, m);
+            return;
         }
-        offset = start;
+        
+        offset = start;     
     }
+
     int v;
     if (read_expression(offset, text, v)) {
         assemble_byte(v);
