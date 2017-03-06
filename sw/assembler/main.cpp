@@ -7,6 +7,7 @@
 #include <vector>
 #include <cctype>
 #include <unordered_map>
+#include <iomanip>
 
 #include "macro.h"
 #include "symbol.h"
@@ -25,10 +26,9 @@ using std::vector;
 using std::unordered_map;
 
 static symbol_table g_symbol_table;
-static symbol dot;
+static symbol* g_dot;
 static int pass;
 static int max_dot;
-static bool uses_dot;
 
 string get_file_string(string& filename);
 bool is_token_char(char c);
@@ -206,14 +206,14 @@ void scan(string& text)
                 if (!is_eol(ch)) {
                     read_expression(offset, text, align);
                 }
-                while ((dot.value_ % align) != 0) {
+                while ((g_dot->value_ % align) != 0) {
                     assemble_byte(0);
                 }
                 continue;
             } else if (token == ".text") {
                 assemble_string(offset, text);
                 assemble_byte(0);
-                while (dot.value_ % 4 != 0) {
+                while (g_dot->value_ % 4 != 0) {
                     assemble_byte(0);
                 }
                 continue;
@@ -274,8 +274,8 @@ void assign_value(
             } else {
                 s->type_ = symbol::ASSIGN;
                 s->value_ = v;
-                if (s->name_ == "." && dot.value_ > max_dot) {
-                    max_dot = dot.value_;
+                if (s->name_ == "." && g_dot->value_ > max_dot) {
+                    max_dot = g_dot->value_;
                 }
             }
         }
@@ -295,10 +295,10 @@ void assign_label(
                 exit(-1);
             } else {
                 s->type_ = symbol::LABEL;
-                s->value_ = dot.value_;
+                s->value_ = g_dot->value_;
             }
         } else {
-            if (s->value_ != dot.value_) {
+            if (s->value_ != g_dot->value_) {
                 cout << "phase error in symbol definition "
                         << token << endl;
                 exit(-1);
@@ -383,7 +383,8 @@ int read_symbol_value(
 
     if (g_symbol_table.get_symbol(name, true, &s)) {
         if (pass == 2 && s->type_ == symbol::UNDEF) {
-            cout << "undefined symbol" << name << endl;
+            cout << "undefined symbol " << name << endl;
+            cout << g_symbol_table;
             exit(-1);
         } else {
             return s->value_;
@@ -600,7 +601,7 @@ void read_operand(
             return;
         }
         
-        offset = start;     
+        offset = start;
     }
 
     int v;
@@ -651,13 +652,15 @@ void call_macro(
 void assemble_byte(int v)
 {
     if (pass == 2) {
-        cout << "mem[" << dot.value_ << "] = " << v << endl;
+        cout << "mem[" << g_dot->value_ << "] = 0x" << std::hex << 
+                std::setw(2) << std::setfill('0') << (0xFF & v) << 
+                std::dec << endl;
     }
 
-    dot.value_++;
+    g_dot->value_++;
 
-    if (dot.value_ > max_dot) {
-        max_dot = dot.value_;
+    if (g_dot->value_ > max_dot) {
+        max_dot = g_dot->value_;
     }
 }
 
@@ -733,16 +736,18 @@ int main(
 
     string filename = argv[1];
     string text = get_file_string(filename);
-
+    
     string dot_name = ".";
-    dot = symbol(dot_name, 0);
+    g_symbol_table.get_symbol(dot_name, true, &g_dot);
+
     max_dot = 0;
     pass = 1;
     g_symbol_table.initialize_macros();
     
     scan(text);
 
-    dot.value_ = 0;
+    symbol* dot;
+    g_dot->value_ = 0;
     max_dot = 0;
     pass = 2;
     g_symbol_table.initialize_macros();
